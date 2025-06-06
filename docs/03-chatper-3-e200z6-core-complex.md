@@ -1,0 +1,660 @@
+### Chatper 3 e200z6 Core Complex
+
+## 3.1 Introduction
+
+The core complex of the MPC5553/MPC5554 consists of the e200z6 core, a 32 Kbyte (MPC5554)/8 kilobyte (MPC5553) unified cache memory, a 32-entry memory management unit (MMU), a Nexus Class 3  block,  and  a  bus  interface  unit  (BIU).  The  e200z6  core  is  the  central  processing  unit  (CPU)  in  the MPC5553/MPC5554. The e200z6 core is part of a family of CPU cores that implement low-cost versions of the PowerPC Book E architecture. Refer to the e200z6 PowerPC TM Core Reference Manual for more information on the e200z6 core.
+
+## 3.1.1 Block Diagram
+
+Figure 3-1 shows a block diagram of the e200z6 core complex.
+
+Figure 3-1. e200z6 Block Diagram
+
+<!-- image -->
+
+## 3.1.2 Overview
+
+The e200z6 core integrates an integer execution unit, branch control unit, instruction fetch and load/store units, and a multi-ported register file capable of sustaining three read and two write operations per clock. Most integer instructions execute in a single clock cycle. Branch target prefetching is performed by the branch target address cache to allow single-cycle branches in many cases.
+
+The  e200z6    core  complex  is  a  single-issue,  32-bit  PowerPC  Book  E  compliant  design  with  64-bit general-purpose  registers  (GPRs).  PowerPC  Book  E  floating-point  instructions  are  not  supported  in hardware, but are trapped and may be emulated by software. A signal processing extension (SPE) auxiliary processing unit (APU) is provided to support real-time fixed point and single-precision floating point operations using the general-purpose registers. All arithmetic instructions that execute in the core operate on data in the GPRs. The registers have been extended to 64-bits in order to support vector instructions defined by the SPE APU. These instructions operate on 16-bit or 32-bit data types, and produce vector or scalar results.
+
+## 3.1.3 Features
+
+The following is a list of some of the key features of the e200z6:
+
+- · Single issue, 32-bit PowerPC Book E compliant CPU
+- · In-order execution and retirement
+- · Precise exception handling
+- · Branch target address cache
+- - Dedicated branch address calculation adder
+- - Branch target prefetching
+- - Branch lookahead buffers of depth 2
+- · Load/store unit
+- - Pipelined operation supports throughput of one load or store operation per cycle
+- · 64-bit general-purpose register file
+- · Memory management unit (MMU) with 32-entry fully-associative TLB and multiple page size support
+- · 32 kilobyte, 8-way set associative unified cache in the MPC5554; 8 kilobyte, 2-way set-associative unified cache in the MPC5553
+- · Periodic timer and watchdog functions
+- · Signal processing extension APU supporting fixed-point and single-precision floating-point operations, using the 64-bit general-purpose register file
+- · Nexus class 3 real-time development unit
+- · Power management
+- - Low power design
+- - Dynamic power management of execution units, caches and MMUs
+
+## 3.1.3.1 Instruction Unit Features
+
+The features of the instruction unit are the following:
+
+- · 64-bit path to cache supports fetching of two 32-bit instructions per clock
+- · Instruction buffer holds up to 6 sequential instructions
+- · Dedicated PC incrementer supporting instruction prefetches
+- · Branch target address cache with dedicated branch address adder, and branch lookahead logic supporting single cycle execution of successful lookahead branches
+
+## 3.1.3.2 Integer Unit Features
+
+The integer unit supports single cycle execution of most integer instructions:
+
+- · 32-bit AU for arithmetic and comparison operations
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+- · 32-bit LU for logical operations
+- · 32-bit priority encoder for count leading zeros function
+- · 32-bit single cycle barrel shifter for static shifts and rotates
+- · 32-bit mask unit for data masking and insertion
+- · Divider logic for signed and unsigned divides in 6-16 clocks with minimized execution timing
+- · Pipelined 32x32 hardware multiplier array supports 32x32-&gt;32 multiply with 3 clock latency, 1 clock throughput
+
+## 3.1.3.3 Load/Store Unit Features
+
+The load/store unit supports load, store, and the load multiple / store multiple instructions:
+
+- · 32-bit effective address adder for data memory address calculations
+- · Pipelined operation supports throughput of one load or store operation per cycle
+- · Dedicated 64-bit interface to memory supports saving and restoring of up to two registers per cycle for load multiple and store multiple word instructions
+
+## 3.1.3.4 MMU Features
+
+The features of the MMU are as follows:
+
+- · Virtual memory support
+- · 32-bit virtual and physical addresses
+- · 8-bit process identifier
+- · 32-entry fully associative TLB
+- · Support for nine page sizes (4, 16, 64, and 256 Kbytes, 1, 4, 16, 64, and 256 Mbytes)
+- · Entry flush protection
+
+## 3.1.3.5 L1 Cache Features
+
+The features of the cache are as follows:
+
+- · 32-kilobyte, 8-way set associative unified cache in the MPC5554; 8-kilobyte, 2-way set associative unified cache in the MPC5553.
+- · Copyback and writethrough support
+- · 8-entry store buffer
+- · Push buffer
+- · Linefill buffer
+- · 32-bit address bus plus attributes and control
+- · Separate unidirectional 64-bit read data bus and 64-bit write data bus
+- · Supports cache line locking
+- · Supports way allocation
+
+## 3.1.3.6 BIU Features
+
+The features of the e200z6 BIU are as follows:
+
+- · 32-bit address bus plus attributes and control
+- · Separate unidirectional 64-bit read data bus and 64-bit write data bus
+- · Overlapped, in-order accesses
+
+## 3.1.4 Microarchitecture Summary
+
+The e200z6 processor utilizes a seven stage pipeline for instruction execution. The instruction fetch 1, instruction fetch 2, instruction decode/register file read, execute1, execute2/memory access1, execute3/memory access2, and register writeback stages operate in an overlapped fashion, allowing single clock instruction execution for most instructions.
+
+The integer execution unit consists of a 32-bit arithmetic unit (AU), a logic unit (LU), a 32-bit barrel shifter (shifter), a mask-insertion unit (MIU), a condition register manipulation unit (CRU), a count-leading-zeros unit (CLZ), a 32x32 hardware multiplier array, result feed-forward hardware, and support hardware for division.
+
+Most arithmetic and logical operations are executed in a single cycle with the exception of multiply, which is implemented with a pipelined hardware array, and the divide instructions. A count-leading-zeros unit operates in a single clock cycle.
+
+The instruction unit contains a PC incrementer and a dedicated branch address adder to minimize delays during change of flow operations. Sequential prefetching is performed to ensure a supply of instructions into  the  execution  pipeline.  Branch  target  prefetching  is  performed  to  accelerate  taken  branches. Prefetched instructions are placed into an instruction buffer capable of holding 6 sequential instructions.
+
+Branch target addresses are calculated in parallel with branch instruction decode, resulting in execution time of three clocks. Conditional branches which are not taken execute in a single clock. Branches with successful lookahead and target prefetching have an effective execution time of one clock.
+
+Memory load and store operations are provided for byte, halfword, word (32-bit), and double-word data with automatic zero or sign extension of byte and halfword load data as well as optional byte reversal of data.  These  instructions  can  be  pipelined  to  allow  effective  single  cycle  throughput.  Load  and  store multiple word instructions allow low overhead context save and restore operations. The load/store unit contains a dedicated effective address adder to allow effective address generation to be optimized.
+
+The condition register unit supports the condition register (CR) and condition register operations defined by the PowerPC architecture. The condition register consists of eight 4-bit fields that reflect the results of certain operations, such as move, integer and floating-point compare, arithmetic, and logical instructions, and provide a mechanism for testing and branching.
+
+Vectored and auto-vectored interrupts are supported by the CPU. Vectored interrupt support is provided to allow multiple interrupt sources to have unique interrupt handlers invoked with no software overhead.
+
+The SPE APU supports vector instructions operating on 16- and 32-bit fixed-point data types, as well as 32-bit  IEEE-754  single-precision  floating-point  formats,  and  supports  single-precision  floating-point operations in a pipelined fashion. The 64-bit general-purpose register file is used for source and destination operands, and there is a unified storage model for single-precision floating-point data types of 32-bits and the  normal  integer  type.  Low  latency  fixed-point  and  floating-point  add,  subtract,  multiply,  divide, compare, and conversion operations are provided, and most operations can be pipelined.
+
+## 3.2 Core Registers and Programmer's Model
+
+This section describes the registers implemented in the e200z6 core. It includes an overview of registers defined  by  the  PowerPC  Book  E  architecture,  highlighting  differences  in  how  these  registers  are implemented  in  the  e200z6  core,  and  provides  a  detailed  description  of  core-specific  registers.  Full descriptions of the architecture-defined register set are provided in PowerPC Book E architecture.
+
+The  PowerPC  Book  E  architecture  defines register-to-register operations for all computational instructions. Source data for these instructions are accessed from the on-chip registers or are provided as immediate values embedded in the opcode. The three-register instruction format allows specification of a
+
+## e200z6 Core Complex
+
+target register distinct from the two source registers, thus preserving the original data for use by other instructions. Data is transferred between memory and registers with explicit load and store instructions only.
+
+e200z6 extends the general-purpose registers to 64-bits for supporting SPE APU operations. PowerPC Book E instructions operate on the lower 32 bits of the GPRs only, and the upper 32 bits are unaffected by these instructions. SPE vector instructions operate on the entire 64-bit register. The SPE APU defines load and store instructions for transferring 64-bit values to/from memory.
+
+Figure 3-2 and Figure 3-3 show the complete e200z6 register set. Figure 3-2 shows the registers that are accessible while in supervisor mode, and Figure 3-3 shows the set of registers that are accessible while in user mode. The number to the right of the special-purpose registers (SPRs) is the decimal number used in the instruction syntax to access the register (for example, the integer exception register (XER) is SPR 1).
+
+| IAC1   | SPR 312   |
+|--------|-----------|
+| IAC2   | SPR 313   |
+| IAC3   | SPR 314   |
+| IAC4   | SPR 315   |
+
+Figure 3-2. Supervisor Mode Programmer's Model
+
+<!-- image -->
+
+## MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Figure 3-3. User Mode Programmer's Model
+
+<!-- image -->
+
+## 3.2.1 PowerPC Book E Registers
+
+e200z6 supports most of the registers defined by the PowerPC Book E architecture. Notable exceptions are the floating point registers FPR0-FPR31 and FPSCR. The e200z6 does not support the Book E floating point architecture in hardware. The supported PowerPC Book E registers are described as follows:
+
+## 3.2.1.1 User-Level Registers
+
+The user-level registers can be accessed by all software with either user or supervisor privileges. They include the following:
+
+- · General-purpose registers (GPRs). The thirty-two 64-bit GPRs (GPR0-GPR31) serve as data source or destination registers for integer and SPE APU instructions and provide data for generating addresses. PowerPC Book E instructions affect only the lower 32 bits of the GPRs. SPE APU instructions are provided which operate on the entire 64-bit register.
+- · Condition register (CR). The 32-bit CR consists of eight 4-bit fields, CR0-CR7, that reflect results of certain arithmetic operations and provide a mechanism for testing and branching. The remaining user-level registers are SPRs. Note that the PowerPC architecture provides the mtspr and mfspr instructions for accessing SPRs.
+- · Integer exception register (XER). The XER indicates overflow and carries for integer operations.
+- · Link register (LR). The LR provides the branch target address for the branch conditional to link register ( bclr bclrl , ) instructions, and is used to hold the address of the instruction that follows a branch and link instruction, typically used for linking to subroutines.
+- · Count register (CTR). The CTR holds a loop count that can be decremented during execution of appropriately coded branch instructions. The CTR also provides the branch target address for the branch conditional to count register ( bcctr bcctrl , ) instructions.
+- · The time base facility (TB) consists of two 32-bit registers: time base upper (TBU) and time base lower (TBL). These two registers are accessible in a read-only fashion to user-level software.
+
+- · SPRG--SPRG7. The PowerPC Book E architecture defines software-use special purpose registers (SPRGs). SPRG4-SPRG7 are accessible in a read-only fashion by user-level software. The e200z6 does not allow user mode access to the SPRG3 register (defined as implementation dependent by Book E).
+- · USPRG0. The PowerPC Book E architecture defines user software-use special purpose register USPRG0 which is accessible in a read-write fashion by user-level software.
+
+## 3.2.1.2 Supervisor-Level Only Registers
+
+In addition to the registers accessible in user mode, Supervisor-level software has access to additional control and status registers an operating system used for configuration, exception handling, and other operating  system  functions.  The  PowerPC  Book  E  architecture  defines  the  following  supervisor-level registers:
+
+- · Processor control registers
+- - Machine state register (MSR). The MSR defines the state of the processor. The MSR can be modified by the move to machine state register ( mtmsr ), system call ( sc) , and return from exception ( rfi, rfci, rfdi) instructions. It can be read by the move from machine state register ( mfmsr) instruction. When an interrupt occurs, the contents of the MSR are saved to one of the machine state save/restore registers (SRR1, CSRR1, DSRR1).
+- - Processor version register (PVR). This register is a read-only register that identifies the version (model) and revision level of the PowerPC processor.
+- - Processor identification register (PIR). This read-only register is provided to distinguish the processor from other processors in the system.
+- · Storage control register
+- - Process ID register (PID, also referred to as PID0). This register is provided to indicate the current process or task identifier. It is used by the MMU as an extension to the effective address, and by external Nexus 2/3/4 modules for ownership trace message generation. PowerPC Book E allows for multiple PIDs; e200z6 implements only one.
+- · Interrupt registers
+- - Data exception address register (DEAR). After a data storage interrupt (DSI), alignment interrupt, or data TLB miss Interrupt, the DEAR is set to the effective address (EA) generated by the faulting instruction.
+- - Software-use special purpose registers (SPRGs). The SPRG0-SPRG7 registers are provided for operating system use.
+- - Exception syndrome register (ESR). The ESR register provides a syndrome to differentiate between the different kinds of exceptions which can generate the same interrupt.
+- - Interrupt vector prefix register (IVPR) and the interrupt vector offset registers (IVOR1-IVOR15). These registers together provide the address of the interrupt handler for different classes of interrupts.
+- - Save/restore registers (SRR0, SRR1). SRR0 holds the effective address for the instruction at which execution resumes when an rfi instruction is executed at the end of a non-critical class interrupt handler routine. SRR1 is used to save machine state on a non-critical interrupt, and stores the MSR register contents. The MSR value is restored when an rfi instruction is executed at the end of a non-critical class interrupt handler routine.
+- - Critical save/restore registers (CSRR0, CSRR1). CSRR0 holds the effective address for the instruction at which execution resumes when an rfci instruction is executed at the end of a critical class interrupt handler routine. CSRR1 is used to save machine state on a critical interrupt, and stores the MSR register contents. The MSR value is restored when an rfci instruction is executed at the end of a critical class interrupt routine.
+
+## e200z6 Core Complex
+
+- · Debug facility registers
+- - Debug control registers (DBCR0-DBCR2). These registers provide control for enabling and configuring debug events.
+- - Debug status register (DBSR). This register contains debug event status.
+- - Instruction address compare registers (IAC1-IAC4). These registers contain addresses and/or masks which are used to specify instruction address compare debug events.
+- - Data address compare registers (DAC1, DAC2). These registers contain addresses and/or masks which are used to specify data address compare debug events.
+- - e200z6 does not implement the data value compare registers (DVC1, DVC2).
+- · Timer registers
+- - The clock inputs for the timers are connected to the internal system clock.
+- - Time base (TB). The TB is a 64-bit structure provided for maintaining the time of day and operating interval timers. The TB consists of two 32-bit registers, time base upper (TBU) and time base lower (TBL). The time base registers can be written to only by supervisor-level software, but can be read by both user and supervisor-level software.
+- - Decrementer register (DEC). This register is a 32-bit decrementing counter that provides a mechanism for causing a decrementer exception after a programmable delay.
+- - Decrementer auto-reload (DECAR). This register is provided to support the auto-reload feature of the Decrementer.
+- - Timer control register (TCR). This register controls decrementer, fixed-interval timer, and watchdog timer options.
+- - Timer status register (TSR). This register contains status on timer events and the most recent watchdog timer-initiated processor reset.
+
+More details about these registers can be found in the PowerPC Book E architecture specifications.
+
+## 3.2.2 Core-Specific Registers
+
+The PowerPC Book E architecture allows implementation-specific registers. Those incorporated in the e200z6 core are as follows:
+
+## 3.2.2.1 User-Level Registers
+
+The user-level registers can be accessed by all software with either user or supervisor privileges. They include the following:
+
+- · Signal processing extension APU status and control register (SPEFSCR). The SPEFSCR contains all fixed-point and floating-point exception signal bits, exception summary bits, exception enable bits, and rounding control bits needed for compliance with the IEEE 754 standard.
+- · The L1 cache configuration register (L1CFG0). This read-only register allows software to query the configuration of the L1 Unified cache.
+
+## 3.2.2.2 Supervisor-Level Registers
+
+The following supervisor-level registers are defined in e200z6 core in addition to the PowerPC Book E registers described above:
+
+- · Configuration registers
+- - Hardware implementation-dependent register 0 (HID0). This register controls various processor and system functions.
+
+- - Hardware implementation-dependent register 1 (HID1). This register controls various processor and system functions.
+- · Exception handling and control registers
+- - Debug save/restore registers (DSRR0, DSRR1). DSRR0 holds the effective address for the instruction at which execution resumes when an rfdi instruction is executed at the end of a debug interrupt handler routine. DSRR1 is used to save machine state on a debug interrupt, and stores the MSR register contents. The MSR value is restored when an rfdi instruction is executed at the end of a debug interrupt handler routine.
+- -  When enabled, the DSRR0 register is used to save the address of the instruction at which execution continues when rfdi executes at the end of a debug interrupt handler routine.
+- - Interrupt vector offset registers (IVOR32-IVOR34). These registers provide the address of the interrupt handler for different classes of interrupts.
+- · Debug facility registers
+- - Debug control register 3 (DBCR3)-This register provides control for debug functions not described in PowerPC Book E architecture.
+- - Debug counter register (DBCNT)-This register provides counter capability for debug functions.
+- · Cache registers
+- - L1 cache configuration register (L1CFG0) is a read-only register that allows software to query the configuration of the L1 Cache.
+- - L1 cache control and status register (L1CSR0) control the operation of the L1 unified cache such as cache enabling, cache invalidation, cache locking, etc.
+- - L1 cache flush and invalidate register (L1FINV0) controls software flushing and invalidation of the L1 unified cache.
+- · Memory management unit registers
+- - MMU configuration register (MMUCFG) is a read-only register that allows software to query the configuration of the MMU.
+- - MMU assist (MAS0-MAS4, MAS6) registers. These registers provide the interface to the core from the memory management unit.
+- - MMU control and status register (MMUCSR0) controls invalidation of the MMU.
+- - TLB configuration registers (TLBCFG0, TLBCFG1) are read-only registers that allow software to query the configuration of the TLBs.
+- · System version register (SVR). This register is a read-only register that identifies the version (model) and revision level of the system which includes an e200z6 PowerPC processor.
+
+More details about these registers can be found in the e200z6 core reference.
+
+## 3.2.3 e200Z6 Core Complex Features Not Supported in the MPC5553/MPC5554
+
+The MPC5553/MPC5554 implements a subset of the e200z6 core complex features. The e200z6 core complex  features that are not supported in the MPC5553/MPC5554 are described in Table 3-1.
+
+Table 3-1. e200z6 Features Not Supported in the MPC5553/MPC5554 Core
+
+| Description                                                                                                                                                                                                           | Function / Category    |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------|
+| These events are disabled: External Debug Event (DEVT2) Unconditional Debug Event (UDE)                                                                                                                               |                        |
+| The e200z6 Core Halted State and Stopped State are not supported.                                                                                                                                                     | Power Management       |
+| The following low power modes are not supported: Doze mode Nap mode Sleep mode Time base interrupt wake-up from low power mode is not supported.                                                                      | Power Management       |
+| Core wake up is not supported. The MSR[WE] bit in the Machine State Register is not supported. The OCR[WKUP] bit in the Zen OnCE Control Register (OCR) has no effect.                                                | Power Management       |
+| The machine check input pin is not supported. HID0 [EMCP] has no effect, and MCSR[MCP] always reads a negated value.                                                                                                  | Machine Check          |
+| Least significant halfword of Processor Version Register (PVR) is 0x 0000, which contains these three bitfields: MBG Use = 0x00 MBG Rev = 0x0 MBG ID = 0x0 The PVR register has two bitfields in the MPC5553/MPC5554. | PVR Value              |
+| Reservation Management logic external to the e200z6 is not implemented.                                                                                                                                               | Reservation Management |
+| The System Version Register (SVR) of the e200z6 is 0x 0000_0000                                                                                                                                                       | Verification           |
+| The internal Time Base and Decrementer Counters are always enabled in the e200z6                                                                                                                                      | Time Base              |
+| Timer External Clock is not supported.                                                                                                                                                                                | Time Base              |
+| The CTXCR and ALTCXTCR registers are not supported.                                                                                                                                                                   | Context Control        |
+
+## 3.3 Functional Description
+
+The following sections describe the function of the various blocks within the e200z6 core.
+
+## 3.3.1 Memory Management Unit (MMU)
+
+The memory management unit (MMU) is a 32-bit PowerPC Book E compliant implementation with a 32-entry fully associative translation lookaside buffer (TLB). The PowerPC Book E architecture divides the effective and real address space into pages. The page represents the granularity of effective address translation, permission control, and memory/cache attributes. The e200z6 MMU supports the following nine page sizes: 4K, 16K, 64K, 256K, 1M, 4M, 16M, 64M, and 256M.
+
+## 3.3.1.1 Translation Lookaside Buffer (TLB)
+
+The TLB consists of a 32-entry, fully associative content addressable memory (CAM) array. To perform a lookup, the CAM is searched in parallel for a matching TLB entry. The contents of this TLB entry are then concatenated with the page offset of the original effective address. The result constitutes the real (physical) address of the access. Table 3-2 shows the TLB entry bit definitions.
+
+Table 3-2. TLB Entry Bit Definitions
+
+| Field      | Comments                                                                                                     |
+|------------|--------------------------------------------------------------------------------------------------------------|
+| V          | Valid bit for entry                                                                                          |
+| TS         | Translation address space (compared against AS bit)                                                          |
+| TID[0:7]   | Translation ID (compared against PID0 or '0')                                                                |
+| EPN[0:19]  | Effective page number (compared against effective address)                                                   |
+| RPN[0:19]  | Real page number (translated address)                                                                        |
+| SIZE[0-3]  | Page size (4K/16K/64K/256K/1M/4M/16M/64M/256Mbytes)                                                          |
+| SX, SW, SR | Supervisor execute, write, and read permission bits                                                          |
+| UX, UW, UR | User execute, write, and read permission bits                                                                |
+| WIMGE      | Translation attributes (Write-through required, cache-Inhibited, Memory coherence required, Guarded, Endian) |
+| U0-U3      | User bits -- used only by software                                                                           |
+| IPROT      | Invalidation protect                                                                                         |
+
+The TLB is accessed indirectly through several MMU assist (MAS) registers; refer to Section 3.3.1.5, 'MMU Assist Registers (MAS0-MAS4, MAS6) and the e200z6 PowerPC TM Core Reference Manual for more details. Software can write and read the MMU Assist registers with mtspr (move to SPR) and mfspr (move from SPR) instructions. These registers contain information related to reading and writing a given entry within the TLB. Data is read from the TLB into the MAS registers with a tlbre (TLB read entry) instruction. Data is written to the TLB from the MAS registers with a tlbwe (TLB write entry) instruction.
+
+## 3.3.1.2 Translation Flow
+
+The effective address, concatenated with the address space value of the corresponding MSR bit (MSR[IS] or MSR[DS], is compared to the appropriate number of bits of the EPN field and the TS field of TLB entries. If the contents of the effective address plus the address space bit matches the EPN field and TS bit
+
+of the TLB entry, that TLB entry is a candidate for a possible translation match. In addition to a match in the EPN field and TS, a matching TLB entry must match with the current process ID of the access (in PID0), or have a TID value of 0, indicating the entry is globally shared among all processes.
+
+Figure 3-4 shows the translation match logic for the effective address plus its attributes, collectively called the virtual address, and how it is compared with the corresponding fields in the TLB entries.
+
+Figure 3-4. Virtual Address and TLB-Entry Compare Process
+
+<!-- image -->
+
+## 3.3.1.3 Effective to Real Address Translation
+
+Instruction accesses are generated by sequential instruction fetches or due to a change in program flow (branches and interrupts). Data accesses are generated by load, store, and cache management instructions. The instruction fetch, branch, and load/store units generate 32-bit effective addresses. The MMU translates this effective address to a 32-bit real address which is then used for memory accesses. Figure 3-5 shows the effective to real address translation flow.
+
+<!-- image -->
+
+NOTE: n = 32-log (page size)
+
+2 n ≥ 20 n = 20 for 4-Kbyte page size.
+
+Figure 3-5. Effective to Real Address Translation Flow
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+## 3.3.1.4 Permissions
+
+The application software may restrict access to virtual pages by selectively granting permissions for user mode read, write, and execute, and supervisor mode read, write, and execute on a per page basis. For example, program code might be execute-only and data structures may be mapped as read/write/no-execute.
+
+The UX, SX, UW, SW, UR, and SR access control bits are provided to support selective permissions (access control):
+
+- · SR-Supervisor read permission. Allows loads and load-type cache management instructions to access the page while in supervisor mode.
+- · SW-Supervisor write permission. Allows stores and store-type cache management instructions to access the page while in supervisor mode.
+- · SX-Supervisor execute permission. Allows instruction fetches to access the page and instructions to be executed from the page while in supervisor mode.
+- · UR-User read permission. Allows loads and load-type cache management instructions to access the page while in user mode.
+- · UW-User write permission. Allows stores and store-type cache management instructions to access the page while in user mode.
+- · UX-User execute permission. Allows instruction fetches to access the page and instructions to be executed from the page while in user mode.
+
+If the translation match was successful, the permission bits are checked as shown in Figure 3-6. If the access is not allowed by the access permission mechanism, the processor generates an instruction or data storage interrupt (ISI or DSI).
+
+Figure 3-6. Granting of Access Permission
+
+<!-- image -->
+
+## 3.3.1.5 MMU Assist Registers (MAS0-MAS4, MAS6)
+
+The e200z6 uses six special purpose registers  (MAS0,  MAS1, MAS2, MAS3, MAS4 and MAS6) to facilitate reading, writing, and searching the TLBs. The MAS registers can be read or written using the mfspr and mtspr instructions.  The  e200z6  does  not  implement  the  MAS5  register,  present  in  other Freescale EIS designs, because the tlbsx instruction only searches based on a single SPID value.
+
+Additional information on the MAS n registers  is  available  in  the e200z6 PowerPC TM Core Reference Manual . The MAS0 register is shown in Figure 3-7.
+
+Figure 3-7. MAS Register 0 (MAS0) Format
+
+<!-- image -->
+
+| 0     |                                                                | 2 3                                                            | 4                                                              | 10                                                             |                                                                | 16                                                             | 27                                                             | 31                                                             |
+|-------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
+| Field | -                                                              | TLBSEL                                                         | -                                                              |                                                                | ESEL                                                           | -                                                              |                                                                | NV                                                             |
+| Reset | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion |
+| R/W   | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            |
+| SPR   | SPR 624                                                        | SPR 624                                                        | SPR 624                                                        | SPR 624                                                        | SPR 624                                                        | SPR 624                                                        | SPR 624                                                        | SPR 624                                                        |
+
+MAS0 fields are defined in Table 3-3.
+
+Table 3-3. MAS0-MMU Read/Write and Replacement Control
+
+| Bits   | Name   | Description                                                                                                                      |
+|--------|--------|----------------------------------------------------------------------------------------------------------------------------------|
+| 0-1    | -      | Reserved, should be cleared.                                                                                                     |
+| 2-3    | TLBSEL | Selects TLB for access 01 TLB1 (ignored by the e200z6, should be written to 01 for future compatibility)                         |
+| 4-10   | -      | Reserved, should be cleared.                                                                                                     |
+| 11-15  | ESEL   | Entry select for TLB1                                                                                                            |
+| 16-26  | -      | Reserved, should be cleared.                                                                                                     |
+| 27-31  | NV     | Next replacement victim for TLB1 (software managed). Software updates this field; it is copied to the ESEL field on a TLB error. |
+
+The MAS1 register is shown in Figure 3-8.
+
+Figure 3-8. MMU Assist Register 1 (MAS1)
+
+<!-- image -->
+
+|       | 0                                                              | 1                                                              | 2                                                              | 7                                                              | 8                                                              | 15                                                             | 16                                                             | 18                                                             | 19                                                             | 20                                                             | 23                                                             | 24                                                             | 31                                                             |
+|-------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
+| Field | VALID                                                          | IPROT                                                          | -                                                              |                                                                | TID                                                            |                                                                | -                                                              |                                                                | TS                                                             | TSIZE                                                          |                                                                | -                                                              |                                                                |
+| Reset | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion |
+| R/W   | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            |
+| SPR   | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        | SPR 625                                                        |
+
+MAS1 fields are defined in Table 3-4.
+
+Table 3-4. MAS1 -Descriptor Context and Configuration Control
+
+| Bits   | Name   | Description                                                                                                                                                                                                             |
+|--------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0      | VALID  | TLB entry valid 0 This TLB entry is invalid. 1 This TLB entry is valid.                                                                                                                                                 |
+| 1      | IPROT  | Invalidation protect 0 Entry is not protected from invalidation. 1 Entry is protected from invalidation. Protects TLB entry from invalidation by tlbivax (TLB1 only), or flash invalidates through MMUCSR0[TLB1_FI].    |
+| 2-7    | -      | Reserved, should be cleared.                                                                                                                                                                                            |
+| 8-15   | TID    | Translation ID bits This field is compared with the current process IDs of the effective address to be translated. A TID value of 0 defines an entry as global and matches with all process IDs.                        |
+| 16-18  | -      | Reserved, should be cleared.                                                                                                                                                                                            |
+| 19     | TS     | Translation address space This bit is compared with the IS or DS fields of the MSR (depending on the type of access) to determine if this TLB entry may be used for translation.                                        |
+| 20-23  | TSIZE  | Entry page size Supported page sizes are: 0b00014 Kbytes 0b01104 Mbytes 0b001016 Kbytes 0b011116 Mbytes 0b001164 Kbytes 0b100064 Mbytes 0b0100256 Kbytes 0b1001256 Mbytes 0b01011 Mbyte All other values are undefined. |
+| 24-31  | -      | Reserved, should be cleared.                                                                                                                                                                                            |
+
+## The MAS2 register is shown in Figure 3-9.
+
+Figure 3-9. MMU Assist Register 2 (MAS2)
+
+| 0     |                                                                | 19                                                             | 20                                                             | 26                                                             | 27                                                             | 28                                                             | 29                                                             | 30                                                             | 31                                                             |
+|-------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
+| Field | EPN                                                            |                                                                |                                                                | W                                                              |                                                                | I                                                              | M                                                              | G                                                              | E                                                              |
+| Reset | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion |
+| R/W   | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            |
+| SPR   | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        | SPR 626                                                        |
+
+## MAS2 fields are defined in Table 3-5.
+
+Table 3-5. MAS2-EPN and Page Attributes
+
+| Bits   | Name   | Description                  |
+|--------|--------|------------------------------|
+| 0-19   | EPN    | Effective page number        |
+| 20-26  | -      | Reserved, should be cleared. |
+
+## MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 3-5. MAS2-EPN and Page Attributes (continued)
+
+|   Bits | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+|--------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|     27 | W      | Write-through required 0 This page is considered write-back with respect to the caches in the system. 1 All stores performed to this page are written through to main memory.                                                                                                                                                                                                                                                                           |
+|     28 | I      | Cache inhibited 0 This page is considered cacheable. 1 This page is considered cache-inhibited.                                                                                                                                                                                                                                                                                                                                                         |
+|     29 | M      | Memory coherence required.The e200z6 does not support the memory coherence required attribute, and thus it is ignored. 0 Memory coherence is not required. 1 Memory coherence is required.                                                                                                                                                                                                                                                              |
+|     30 | G      | Guarded. The e200z6ignores the guarded attribute (other than for generation of the p_hprot[4:2] attributes on an external access), since no speculative or out-of-order processing is performed. 0 Access to this page are not guarded, and can be performed before it is known if they are required by the sequential execution model. 1 All loads and stores to this page are performed without speculation (that is, they are known to be required). |
+|     31 | E      | Endianness. Determines endianness for the corresponding page. 0 The page is accessed in big-endian byte order. 1 The page is accessed in true little-endian byte order.                                                                                                                                                                                                                                                                                 |
+
+The MAS3 register is shown in Figure 3-10.
+
+Permission bits
+
+| 0     |                                                                | 19 20                                                          | 21                                                             | 22                                                             | 23                                                             | 24                                                             | 25                                                             | 26                                                             | 27                                                             | 28                                                             |                                                                | 29                                                             | 30                                                             | 31                                                             |
+|-------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
+| Field | RPN                                                            |                                                                | -                                                              | U0                                                             | U1                                                             |                                                                | U2                                                             | U3                                                             | UX                                                             | SX                                                             | UW                                                             | SW                                                             | UR                                                             | SR                                                             |
+| Reset | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion |
+| R/W   | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            |
+| SPR   | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        | SPR 627                                                        |
+
+Figure 3-10. MMU Assist Register 3 (MAS3)
+
+<!-- image -->
+
+## MAS3 fields are defined in Table 3-6
+
+Table 3-6. MAS3-RPN and Access Control
+
+| Bits   | Name   | Description                                                                                                                                      |
+|--------|--------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-19   | RPN    | Real page number Only bits that correspond to a page number are valid. Bits that represent offsets within a page are ignored and should be zero. |
+| 20-21  | -      | Reserved, should be cleared.                                                                                                                     |
+| 22-25  | U0-U3  | User bits                                                                                                                                        |
+| 26-31  | PERMIS | Permission bits (UX, SX, UW, SW, UR, SR)                                                                                                         |
+
+## MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+## The MAS4 register is shown in Figure 3-11.
+
+Default WIMGE values
+
+Figure 3-11. MMU Assist Register 4 (MAS4)
+
+<!-- image -->
+
+|       | 0                                                              | 2 3                                                            | 4                                                              | 13                                                             | 14                                                             | 15                                                             | 16                                                             | 19                                                             | 20                                                             | 23                                                             | 24                                                             | 26                                                             | 27                                                             | 28                                                             | 29                                                             | 30                                                             | 31                                                             |
+|-------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
+| Field | -                                                              | TLBSELD                                                        | -                                                              |                                                                | TIDSELD                                                        | TIDSELD                                                        | -                                                              |                                                                | TSIZED                                                         | TSIZED                                                         |                                                                | -                                                              |                                                                | WD ID                                                          | MD                                                             | GD                                                             | ED                                                             |
+| Reset | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion |
+| R/W   | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            |
+| SPR   | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        | SPR 628                                                        |
+
+MAS4 fields are defined in Table 3-7.
+
+Table 3-7. MAS4-Hardware Replacement Assist Configuration Register
+
+| Bits   | Name    | Description                                                                                                                                      |
+|--------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-1    | -       | Reserved, should be cleared.                                                                                                                     |
+| 2-3    | TLBSELD | Default TLB selected 01 TLB1 (ignored by the e200z6, should be written to 01 for future compatibility)                                           |
+| 4-13   | -       | Reserved, should be cleared.                                                                                                                     |
+| 14-15  | TIDSELD | Default PID# to load TID from 00 PID0 01 Reserved, do not use 10 Reserved, do not use 11 TIDZ (0x00)) (Use all zeros, the globally shared value) |
+| 16-19  | -       | Reserved, should be cleared.                                                                                                                     |
+| 17-23  | TSIZED  | Default TSIZE value                                                                                                                              |
+| 24-26  | -       | Reserved, should be cleared.                                                                                                                     |
+| 27-31  | DWIMGE  | Default WIMGE values                                                                                                                             |
+
+The MAS6 register is shown in Figure 3-12.
+
+Figure 3-12. MMU Assist Register 6 (MAS6))
+
+<!-- image -->
+
+| 0     |                                                                | 7 8                                                            | 15                                                             | 16 30                                                          | 31                                                             |
+|-------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|----------------------------------------------------------------|
+| Field | -                                                              | SPID                                                           | -                                                              | SAS                                                            |                                                                |
+| Reset | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion | Undefined on m_por assertion, unchanged on p_reset_b assertion |
+| R/W   | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            | R/W                                                            |
+| SPR   | SPR 630                                                        | SPR 630                                                        | SPR 630                                                        | SPR 630                                                        | SPR 630                                                        |
+
+MAS6 fields are defined in Table 3-8.
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 3-8. MAS6-TLB Search Context Register 0
+
+| Bits   | Name   | Description                  |
+|--------|--------|------------------------------|
+| 0-7    | -      | Reserved, should be cleared. |
+| 8-15   | SPID   | PID value for searches       |
+| 16-30  | -      | Reserved, should be cleared. |
+| 31     | SAS    | AS value for searches        |
+
+## 3.3.2 L1 Cache
+
+The e200z6 processor supports a 32-kilobyte, 8-way set-associative, unified (instruction and data) cache with a 32-byte line size in the MPC5554; the MPC5553 provides an 8-Kbyte, 2-way set associative unified cache with a 32-byte line size. The cache improves system performance by providing low-latency data to the e200z6 instruction and data pipelines, which decouples processor performance from system memory performance. The cache is virtually indexed and physically tagged. The e200z6 does not provide hardware support for cache coherency in a multi-master environment. Software must be used to maintain cache coherency with other possible bus masters.
+
+Both instruction and data accesses are performed using a single bus connected to the cache. Addresses from the processor to the cache are virtual addresses used to index the cache array. The MMU provides the virtual to physical translation for use in performing the cache tag compare. If the physical address matches a valid cache tag entry, the access hits in the cache. For a read operation, the cache supplies the data to the processor, and for a write operation, the data from the processor updates the cache. If the access does not match a valid cache tag entry (misses in the cache) or a write access must be written through to memory, the cache performs a bus cycle on the system bus. Figure 3-13 shows a block diagram of the unified cache in the e200z6.
+
+Figure 3-13. e200z6 Unified Cache Block Diagram
+
+<!-- image -->
+
+## 3.3.2.1 Cache Organization
+
+The e200z6 cache is organized as eight (MPC5554)/two (MPC5553) ways of 128 sets with each line containing  32  bytes  (four  double-words)  plus  parity  of  storage.  Figure 3-14  illustrates  the  cache organization, terminology used, the cache line format and cache tag formats.
+
+<!-- image -->
+
+Bits
+
+Figure 3-14. Cache Organization and Line Format
+
+## 3.3.2.2 Cache Lookup
+
+Once enabled,  the  unified  cache  will  be  searched  for  a  tag  match  on  all  instruction  fetches  and  data accesses from the CPU. If a match is found, the cached data is forwarded on a read access to the instruction fetch  unit  or  the  load/store  unit  (data  access),  or  is  updated  on  a  write  access,  and  may  also  be written-through to memory if required.
+
+When a read miss occurs, if there is a TLB hit and the cache inhibit bit (WIMGE=0bx0xxx) of the hitting TLB entry is clear, the translated physical address is used to fetch a four double-word cache line beginning with  the  requested  double-word  (critical  double-word  first).  The  line  is  fetched  and  placed  into  the appropriate cache block and the critical double-word is forwarded to the CPU. Subsequent double-words may be streamed to the CPU if they have been requested and streaming is enabled via the DSTRM bit in the L1CSR0 register.
+
+During a cache line fill, double-words received from the bus are placed into a cache linefill buffer, and may be  forwarded  (streamed)  to  the  CPU  if  such  a  request  is  pending.  Accesses  from  the  CPU  following delivery of the critical double-word may be satisfied from the cache (hit under fill, non-blocking) or from the linefill buffer if the requested information has been already received.
+
+The cache always fills an entire line, thereby providing validity on a line-by-line basis. A cache line is always in one of the following states: invalid, valid, or dirty (and valid). For invalid lines, the V bit is clear, causing the cache line to be ignored during lookups. Valid lines have their V bit set and D bit cleared, indicating the line contains valid data consistent with memory. Dirty cache lines have the D and V bits set, indicating that the line has valid entries that have not been written to memory. In addition, a cache line may be locked (L bit set) indicating the line is not available for replacement.
+
+The cache should be explicitly invalidated after a hardware reset; reset does not invalidate the cache lines. Following initial power-up, the cache contents will be undefined. The L, D and V bits may be set on some lines, necessitating the invalidation of the cache by software before being enabled.
+
+Figure 3-15 illustrates the general flow of cache operation.
+
+Figure 3-15. Cache Lookup Flow
+
+<!-- image -->
+
+To determine if the address is already allocated in the cache the following steps are taken:
+
+- 1. The cache set index, virtual address bits A[20:26] are used to select one cache set. A set is defined as the grouping of eight lines (one from each way), corresponding to the same index into the cache array.
+- 2. The higher order physical address bits A[0:19] are used as a tag reference or used to update the cache line tag field.
+- 3. The eight tags from the selected cache set are compared with the tag reference. If any one of the tags matches the tag reference and the tag status is valid, a cache hit has occurred.
+- 4. Virtual address bits A[27:28] are used to select one of the four double-words in each line. A cache hit indicates that the selected double-word in that cache line contain valid data (for a read access), or can be written with new data depending on the status of the W access control bit from the MMU (for a write access).
+
+## 3.3.2.3 Cache Line Replacement Algorithm
+
+On a cache read miss, the cache controller uses a pseudo-round-robin replacement algorithm to determine which cache line will be selected to be replaced. There is a single replacement counter for the entire cache. The replacement algorithm acts as follows: On a miss, if the replacement pointer is pointing to a way which is not enabled for replacement by the type of the miss access (the selected line or way is locked), it is incremented until an available way is selected (if any). After a cache line is successfully filled without error, the replacement pointer increments to point to the next cache way.
+
+## 3.3.3 Interrupt Types
+
+The interrupts implemented in the MPC5553/MPC5554 and the exception conditions that cause them are listed in Table 3-9.
+
+Table 3-9. Interrupts and Conditions
+
+| Interrupt Type             | Interrupt Vector Offset Register   | Enables 1                                     | State Saved In                                | Causing Conditions                                                                                                                                                                                                                                 |
+|----------------------------|------------------------------------|-----------------------------------------------|-----------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| System reset               | none, vector to 0xFFFF_FFFC        |                                               |                                               | GLYPH<127> Reset by assertion of RESET GLYPH<127> Watchdog timer reset control. GLYPH<127> Debug Reset Control.                                                                                                                                    |
+| Critical input             | IVOR0                              | IVOR0 is not supported in the MPC5553/MPC5554 | IVOR0 is not supported in the MPC5553/MPC5554 | IVOR0 is not supported in the MPC5553/MPC5554                                                                                                                                                                                                      |
+| Machine check              | IVOR 1                             | ME                                            | CSSR[0:1]                                     | GLYPH<127> Machine check exception and MSR[ME] =1. GLYPH<127> ISI, ITLB Error on first instruction fetch for an exception handler GLYPH<127> Parity error signaled on cache access GLYPH<127> Write bus error on buffered store or cache line push |
+| Data Storage               | IVOR 2                             | -                                             | SRR[0:1]                                      | GLYPH<127> Access control. GLYPH<127> Byte ordering due to misaligned access across page boundary to pages with mismatched E bits. GLYPH<127> Cache locking exception GLYPH<127> Precise external termination error                                |
+| Instruction Storage        | IVOR 3                             | -                                             | SRR[0:1]                                      | GLYPH<127> Access control. GLYPH<127> Precise external termination error                                                                                                                                                                           |
+| External Input             | IVOR 4 2                           | EE, src                                       | SRR[0:1]                                      | External interrupt is asserted and MSR[EE]=1.                                                                                                                                                                                                      |
+| Alignment                  | IVOR 5                             | -                                             | SRR[0:1]                                      | GLYPH<127> lmw , stmw not word aligned. GLYPH<127> lwarx or stwcx. not word aligned. GLYPH<127> dcbz with disabled cache or no cache present, or to W or I storage. GLYPH<127> SPE ld and st instructions not properly aligned                     |
+| Program                    | IVOR 6                             | -                                             | SRR[0:1]                                      | Illegal, Privileged, Trap, FP enabled, AP enabled, Unimplemented Operation.                                                                                                                                                                        |
+| Floating-point unavailable | IVOR 7                             | -                                             | SRR[0:1]                                      | MSR[FP]=0 and attempt to execute a Book E floating point operation.                                                                                                                                                                                |
+| System call                | IVOR 8                             | -                                             | SRR[0:1]                                      | Execution of the System Call ( sc ) instruction                                                                                                                                                                                                    |
+| AP unavailable             | IVOR 9                             | -                                             | SRR[0:1]                                      | Unused by e200z6                                                                                                                                                                                                                                   |
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 3-9. Interrupts and Conditions (continued)
+
+| Interrupt Type            | Interrupt Vector Offset Register   | Enables 1   | State Saved In   | Causing Conditions                                                                                                                                                                                                                            |
+|---------------------------|------------------------------------|-------------|------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Decrementer               | IVOR 10                            | EE, DIE     | SRR[0:1]         | Decrementer timeout, and as specified in Book E: Enhanced PowerPC TM Architecture, Rev 1.0 , Ch. 8, pg. 194-195 and in the e200Z6 PowerPC tm Core Reference Manual, Rev 0.                                                                    |
+| Fixed Interval Timer      | IVOR 11                            | EE, FIE     | SRR[0:1]         | Fixed-interval timer timeout and as specified in Book E: Enhanced PowerPC TM Architecture, Rev 1.0 , Ch. 8, pg. 195-196 and in the e200Z6 PowerPC tm Core Reference Manual, Rev 0.                                                            |
+| Watchdog Timer            | IVOR 12                            | CE, WIE     | CSRR[0:1]        | Watchdog timeout: as specified in Book E: Enhanced PowerPC TM Architecture, Rev1.0 , Ch. 8, pg. 196-197 and in the e200Z6 PowerPC TM Core Reference Manual, Rev 0.                                                                            |
+| Data TLB Error            | IVOR 13                            | -           | SRR[0:1]         | Data translation lookup did not match a valid entry in the TLB                                                                                                                                                                                |
+| InstructionTLB Error      | IVOR 14                            | -           | SRR[0:1]         | Instruction translation lookup did not match a valid entry in the TLB                                                                                                                                                                         |
+| Debug                     | IVOR 15                            | DE, IDM     | CSSR[O:1]        | Debugger when HIDO[DAPUEN] = 0. Caused by Trap, Instruction Address Compare, Data Address Compare, Instruction Complete, Branch Taken, Return from Interrupt, Interrupt Taken, Debug Counter, External Debug Event, Unconditional Debug Event |
+| Debug                     | IVOR 15                            | DE, IDM     | DSRR[0:1]        | Debugger when HIDO[DAPUEN] = 1, and caused by same conditions as above.                                                                                                                                                                       |
+| Reserved                  | IVOR 16-31                         |             |                  |                                                                                                                                                                                                                                               |
+| SPE Unavailable Exception | IVOR 32                            | -           | SRR[0:1]         | SPEAPUinstruction when MSR[SPE] = 0, and see Section 5.6.18 'SPE APU Unavailable Interrupt' in the e200Z6 PowerPC TM Core Reference Manual, Rev 0.                                                                                            |
+| SPE Data Exception        | IVOR 33                            | -           | SRR[0:1]         | SPE FP data exception and see Section 5.6.19 'SPE Floating-Point Data Interrupt' in the e200Z6 PowerPC TM Core Reference Manual, Rev 0.                                                                                                       |
+| SPE Round Exception       | IVOR 34                            | -           | SRR[0:1]         | Inexact result from floating-point instruction. See Section 5.6.20 'SPE Floating-Point Round Interrupt' in the e200Z6 PowerPC TM Core Reference Manual, Rev 0.                                                                                |
+
+1 CE, ME, EE, DE are in the MSR. DIE, FIE, and WIE are in the TCR. 'src' signifies the individual enable for each INTC source. The debug interrupt, IVOR 15, also requires EDM = 0 (EDM and IDM are in the DBCR0 register).
+
+## 3.3.4 Bus Interface Unit (BIU)
+
+The BIU encompasses control and data signals supporting instruction and data transfers. A data bus width of 64-bits is implemented. The memory interface supports read and write transfers of 8, 16, 24, 32, and 64 bits, supports burst transfers of four double-words, and operates in a pipelined fashion.
+
+Single-beat transfers are supported for cache-inhibited read and write cycles, and write-buffer writes. Burst transfers of four double-words are supported for cache linefill and copyback operations.
+
+## 3.3.5 Timer Facilities
+
+The core provides a set of registers to provide fixed interval timing and watchdog functions for the system. All of these must be initialized during start-up. The registers associated with fixed interval timer and watchdog functions are the following:
+
+- · Timer control register (TCR) - provides control of the timer and watchdog facilities.
+- · Timer status register (TSR) - provides status of the timer facilities.
+- · Time base registers (TBU and TBL) - Two 32-bit registers (upper and lower) that are concatenated to provide a long-period, 64-bit counter.
+- · Decrementer register (DEC) - a decrementing counter that is updated at the same rate as the time base. The DEC provides a means of signaling an exception after a specified amount of time. The DEC is typically used as a general-purpose software timer. Note that the decrementer always runs when the system is clocked, and may be written to by software at any time.
+- · Decrementer auto reload register (DECAR) - provides a value that is automatically reloaded (if enabled) into the decrementer register when the decrementer reaches 0.
+
+For more information on the fixed-interval timer, watchdog timer, and timer and counter registers, refer to the e200z6 PowerPC TM Core Reference Manual and EREF: A Reference for Freescale Book E and the e500 core.
+
+## 3.3.6 Signal Processing Extension APU (SPE APU)
+
+## 3.3.6.1 Overview
+
+The PowerPC 32-bit Book E instructions operate on the lower (least significant) 32 bits of the 64-bit GPRs. New SPE instructions are defined that view the 64-bit register as being composed of a vector of two 32-bit elements, and some of the instructions also read or write 16-bit elements. These new instructions can also be used to perform scalar operations by ignoring the results of the upper 32-bit half of the register file. Some instructions are defined that produce a 64-bit scalar result. Vector fixed-point instructions operate on  a  vector  of  two  32-bit  or  four  16-bit  fixed-point  numbers  resident  in  the  64-bit  GPRs.  Vector floating-point  instructions  operate  on  a  vector  of  two  32-bit  single-precision  floating-point  numbers resident in the 64-bit GPRs. Scalar floating-point instructions operate on the lower half of GPRs. These single-precision floating-point instructions do not have a separate register file; there is a single shared register file for all instructions. Figure 3-16 shows two different representations of the 64-bit GPRs. The shaded half is the only region operated on by the 32-bit PowerPC instructions.
+
+Figure 3-16. 64-bit General-Purpose Registers
+
+<!-- image -->
+
+## 3.3.7 SPE Programming Model
+
+Not all SPE instructions record events such as overflow, saturation, and negative/positive result. See the description  of  the  individual  SPE  instruction  in  the  e200z6  core  reference  for  information  on  which
+
+conditions  are  recorded  and  where  they  are  recorded.  Most  SPE  instructions  record  conditions  to  the SPEFSCR. Vector compare instructions store the result of the comparison into the condition register (CR).
+
+The e200z6 core has a 64-bit architectural accumulator register that holds the results of the SPE multiply accumulate (MAC) fixed-point instructions. The accumulator allows back-to-back execution of dependent fixed-point MAC instructions, something that is found in the inner loops of DSP code such as filters. The accumulator is partially visible to the programmer in that its results do not have to be explicitly read to use them. Instead, they are always copied into a 64-bit destination GPR specified as part of the instruction. The accumulator however, has to be explicitly cleared when starting a new MAC loop. Based upon the type of instruction, the accumulator can hold either a single 64-bit value or a vector of two 32-bit elements.
+
+## 3.4 External References
+
+In addition to the PowerPC Book E instructions, the MPC5554 supports e200z6 core specific instructions and SPE APU instructions. For further information see the following documents:
+
+- · PowerPC Microprocessor Family: The Programming Environment for 32-bit Microprocessors
+- · Book E: Enhanced PowerPC TM  Architecture
+- · EREF: A Reference for Freescale Book E and the e500 core
+
+## 3.5 Revision History
+
+Substantive Changes since Rev 3.0
+
+No changes.
+
+## e200z6 Core Complex

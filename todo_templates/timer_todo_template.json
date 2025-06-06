@@ -1,0 +1,379 @@
+{
+  "peripheral_type": "Timer",
+  "template_version": "1.0",
+  "standard_todos": [
+    {
+      "category": "register_implementation",
+      "todos": [
+        {
+          "title": "Implement Timer Control Register",
+          "description": "Implement the main control register for timer configuration",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Include enable/disable bit",
+            "Mode selection (one-shot, periodic, PWM)",
+            "Clock source selection",
+            "Prescaler configuration"
+          ],
+          "acceptance_criteria": [
+            "Timer can be enabled/disabled",
+            "All modes are configurable",
+            "Configuration changes take effect correctly"
+          ]
+        },
+        {
+          "title": "Implement Timer Counter Register",
+          "description": "Implement the main counter register with proper counting logic",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Handle different counter sizes (16/32/64-bit)",
+            "Implement count up/down modes",
+            "Handle counter overflow/underflow",
+            "Consider read synchronization"
+          ],
+          "acceptance_criteria": [
+            "Counter increments/decrements correctly",
+            "Overflow/underflow behavior is correct",
+            "Counter can be read while running"
+          ]
+        },
+        {
+          "title": "Implement Timer Period/Reload Register",
+          "description": "Implement register for setting timer period or auto-reload value",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Used for periodic mode",
+            "Defines overflow point",
+            "May need shadow register for updates"
+          ],
+          "acceptance_criteria": [
+            "Period can be configured",
+            "Auto-reload works in periodic mode",
+            "Updates don't cause glitches"
+          ]
+        },
+        {
+          "title": "Implement Timer Compare Registers",
+          "description": "Implement compare registers for PWM and output compare modes",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Multiple compare channels common",
+            "Generate events on match",
+            "Support different compare modes"
+          ],
+          "acceptance_criteria": [
+            "Compare matches are detected",
+            "Multiple channels work independently",
+            "Compare events trigger correctly"
+          ]
+        },
+        {
+          "title": "Implement Timer Status Register",
+          "description": "Implement status register for timer events and flags",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Overflow/underflow flags",
+            "Compare match flags",
+            "Capture event flags",
+            "Write-1-to-clear pattern"
+          ],
+          "acceptance_criteria": [
+            "All events set appropriate flags",
+            "Flags can be cleared by software",
+            "No spurious flags"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "timing_and_clocks",
+      "todos": [
+        {
+          "title": "Implement Clock Source Management",
+          "description": "Handle different clock sources and prescaling",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Support multiple clock sources",
+            "Implement prescaler logic",
+            "Handle clock switching",
+            "Use IClockSource interface"
+          ],
+          "acceptance_criteria": [
+            "All clock sources work correctly",
+            "Prescaler divides clock properly",
+            "Clock switching is glitch-free"
+          ]
+        },
+        {
+          "title": "Implement Timer Frequency Calculation",
+          "description": "Calculate actual timer frequency based on clock and prescaler",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Account for clock source frequency",
+            "Include prescaler in calculation",
+            "Handle dynamic clock changes"
+          ],
+          "acceptance_criteria": [
+            "Frequency calculation is accurate",
+            "Updates with clock changes",
+            "Handles all prescaler values"
+          ]
+        },
+        {
+          "title": "Implement Precise Timing Logic",
+          "description": "Ensure accurate timing using Renode's time framework",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Use Machine.ClockSource",
+            "Implement proper time synchronization",
+            "Handle time quantum correctly"
+          ],
+          "acceptance_criteria": [
+            "Timing is accurate to specification",
+            "No drift over long periods",
+            "Synchronizes with machine time"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "interrupt_handling",
+      "todos": [
+        {
+          "title": "Implement Overflow Interrupt",
+          "description": "Generate interrupt on counter overflow/underflow",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Trigger on counter wrap",
+            "Check interrupt enable bit",
+            "Set status flag"
+          ],
+          "acceptance_criteria": [
+            "Interrupt fires on overflow",
+            "Can be enabled/disabled",
+            "Status flag is set"
+          ]
+        },
+        {
+          "title": "Implement Compare Match Interrupts",
+          "description": "Generate interrupts on compare matches",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "One interrupt per compare channel",
+            "Individual enable bits",
+            "Set appropriate status flags"
+          ],
+          "acceptance_criteria": [
+            "Each channel can generate interrupts",
+            "Interrupts can be individually controlled",
+            "Timing is precise"
+          ]
+        },
+        {
+          "title": "Implement Capture Event Interrupts",
+          "description": "Generate interrupts on input capture events",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Trigger on external events",
+            "Capture timer value",
+            "Handle edge selection"
+          ],
+          "acceptance_criteria": [
+            "Captures trigger interrupts",
+            "Timer value is captured correctly",
+            "Edge selection works"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "external_interfaces",
+      "todos": [
+        {
+          "title": "Implement PWM Output Pins",
+          "description": "Create GPIO outputs for PWM channels",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Use IGPIO for outputs",
+            "Update on compare matches",
+            "Support different PWM modes"
+          ],
+          "acceptance_criteria": [
+            "PWM outputs toggle correctly",
+            "Duty cycle is accurate",
+            "All PWM modes work"
+          ]
+        },
+        {
+          "title": "Implement Input Capture Pins",
+          "description": "Create GPIO inputs for capture functionality",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Monitor external signals",
+            "Capture on configured edge",
+            "Handle noise/debouncing"
+          ],
+          "acceptance_criteria": [
+            "External events are captured",
+            "Edge detection works correctly",
+            "Capture timing is accurate"
+          ]
+        },
+        {
+          "title": "Implement External Clock Input",
+          "description": "Support external clock source for timer",
+          "priority": "low",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "GPIO input for clock",
+            "Handle irregular clocking",
+            "Synchronize with internal logic"
+          ],
+          "acceptance_criteria": [
+            "External clock drives counter",
+            "Handles various frequencies",
+            "Switches between clock sources"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "state_management",
+      "todos": [
+        {
+          "title": "Implement Timer State Machine",
+          "description": "Manage timer operational states",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Stopped, Running, Paused states",
+            "Handle state transitions",
+            "Preserve counter on pause"
+          ],
+          "acceptance_criteria": [
+            "All states work correctly",
+            "Transitions are clean",
+            "State is preserved appropriately"
+          ]
+        },
+        {
+          "title": "Implement Shadow Register Logic",
+          "description": "Implement shadow registers for glitch-free updates",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Shadow period/compare values",
+            "Update on specific events",
+            "Configurable update mode"
+          ],
+          "acceptance_criteria": [
+            "Updates don't cause glitches",
+            "Shadow mechanism works correctly",
+            "Update events are configurable"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "testing",
+      "todos": [
+        {
+          "title": "Create Basic Timer Operation Tests",
+          "description": "Test fundamental timer counting functionality",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Test start/stop/reset",
+            "Verify counting accuracy",
+            "Test different modes"
+          ],
+          "acceptance_criteria": [
+            "Timer counts accurately",
+            "All modes work correctly",
+            "Control operations work"
+          ]
+        },
+        {
+          "title": "Create PWM Generation Tests",
+          "description": "Test PWM output functionality",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Test various duty cycles",
+            "Verify frequency accuracy",
+            "Test all PWM modes"
+          ],
+          "acceptance_criteria": [
+            "PWM frequency is accurate",
+            "Duty cycle is correct",
+            "Mode transitions work"
+          ]
+        },
+        {
+          "title": "Create Timing Accuracy Tests",
+          "description": "Verify timer timing accuracy",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Long-running accuracy tests",
+            "Compare with expected values",
+            "Test with different clock sources"
+          ],
+          "acceptance_criteria": [
+            "No timing drift",
+            "Accurate with all clocks",
+            "Meets specification tolerances"
+          ]
+        }
+      ]
+    }
+  ],
+  "optional_features": [
+    {
+      "feature": "DMA Support",
+      "todos": [
+        {
+          "title": "Implement DMA Request Generation",
+          "description": "Generate DMA requests on timer events",
+          "priority": "low",
+          "effort_estimate": "medium"
+        }
+      ]
+    },
+    {
+      "feature": "Timer Chaining",
+      "todos": [
+        {
+          "title": "Implement Timer Cascade Mode",
+          "description": "Allow timers to be chained for extended counting",
+          "priority": "low",
+          "effort_estimate": "large"
+        }
+      ]
+    },
+    {
+      "feature": "Quadrature Decoder",
+      "todos": [
+        {
+          "title": "Implement Quadrature Decoder Mode",
+          "description": "Support for quadrature encoder inputs",
+          "priority": "low",
+          "effort_estimate": "extra-large"
+        }
+      ]
+    }
+  ]
+}

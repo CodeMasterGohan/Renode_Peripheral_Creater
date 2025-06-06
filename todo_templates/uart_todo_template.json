@@ -1,0 +1,422 @@
+{
+  "peripheral_type": "UART",
+  "template_version": "1.0",
+  "standard_todos": [
+    {
+      "category": "register_implementation",
+      "todos": [
+        {
+          "title": "Implement UART Control Register",
+          "description": "Implement main control register for UART configuration",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Enable/disable UART",
+            "Configure data bits, stop bits, parity",
+            "Enable TX/RX independently",
+            "Configure flow control"
+          ],
+          "acceptance_criteria": [
+            "UART can be enabled/disabled",
+            "All configurations work correctly",
+            "Changes take effect immediately"
+          ]
+        },
+        {
+          "title": "Implement UART Status Register",
+          "description": "Implement status register for UART state and errors",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "TX empty/full flags",
+            "RX empty/full flags",
+            "Error flags (overrun, framing, parity)",
+            "Clear-on-read or write-1-to-clear"
+          ],
+          "acceptance_criteria": [
+            "All status flags work correctly",
+            "Error conditions are detected",
+            "Flags can be cleared appropriately"
+          ]
+        },
+        {
+          "title": "Implement UART Data Register",
+          "description": "Implement data register for transmit and receive",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "May be separate TX/RX registers",
+            "Handle FIFO if present",
+            "Trigger status updates",
+            "Generate interrupts on access"
+          ],
+          "acceptance_criteria": [
+            "Data can be transmitted and received",
+            "FIFO behavior is correct",
+            "Status flags update correctly"
+          ]
+        },
+        {
+          "title": "Implement Baud Rate Registers",
+          "description": "Implement registers for baud rate configuration",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Integer and fractional dividers",
+            "Calculate from clock frequency",
+            "Support standard baud rates",
+            "Handle baud rate changes"
+          ],
+          "acceptance_criteria": [
+            "All standard baud rates work",
+            "Actual rate is within tolerance",
+            "Can change baud rate at runtime"
+          ]
+        },
+        {
+          "title": "Implement FIFO Control Registers",
+          "description": "Implement FIFO control and threshold registers",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "FIFO enable/disable",
+            "Threshold configuration",
+            "FIFO reset/flush",
+            "Trigger level interrupts"
+          ],
+          "acceptance_criteria": [
+            "FIFO can be enabled/disabled",
+            "Thresholds trigger correctly",
+            "FIFO can be flushed"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "state_management",
+      "todos": [
+        {
+          "title": "Implement TX FIFO Management",
+          "description": "Manage transmit FIFO state and operations",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Circular buffer implementation",
+            "Track head/tail pointers",
+            "Handle overflow conditions",
+            "Update status flags"
+          ],
+          "acceptance_criteria": [
+            "FIFO stores correct amount of data",
+            "Overflow is handled properly",
+            "Status flags are accurate"
+          ]
+        },
+        {
+          "title": "Implement RX FIFO Management",
+          "description": "Manage receive FIFO state and operations",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Circular buffer implementation",
+            "Handle overrun conditions",
+            "Preserve error information",
+            "Update status flags"
+          ],
+          "acceptance_criteria": [
+            "FIFO receives data correctly",
+            "Overrun is detected and handled",
+            "Error info is preserved per byte"
+          ]
+        },
+        {
+          "title": "Implement Baud Rate Generator",
+          "description": "Implement precise baud rate generation logic",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Use timer/counter for timing",
+            "Handle fractional division",
+            "Synchronize with machine clock",
+            "Support rate changes"
+          ],
+          "acceptance_criteria": [
+            "Baud rate is accurate",
+            "Works with all clock frequencies",
+            "No glitches on rate change"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "external_interfaces",
+      "todos": [
+        {
+          "title": "Implement UART Character Backend",
+          "description": "Connect UART to Renode's character backend system",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Inherit from UARTBase",
+            "Implement WriteChar method",
+            "Handle CharReceived event",
+            "Support terminal connection"
+          ],
+          "acceptance_criteria": [
+            "Can connect to terminal",
+            "Characters transmit correctly",
+            "Characters receive correctly"
+          ]
+        },
+        {
+          "title": "Implement Hardware Flow Control Pins",
+          "description": "Implement RTS/CTS hardware flow control",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "GPIO pins for RTS/CTS",
+            "Monitor CTS for transmission",
+            "Assert RTS based on RX FIFO",
+            "Make configurable"
+          ],
+          "acceptance_criteria": [
+            "RTS/CTS pins work correctly",
+            "Flow control prevents overflow",
+            "Can be enabled/disabled"
+          ]
+        },
+        {
+          "title": "Implement Modem Control Pins",
+          "description": "Implement additional modem control signals",
+          "priority": "low",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "DTR, DSR, DCD, RI pins",
+            "Status register bits",
+            "Interrupt on change",
+            "GPIO implementation"
+          ],
+          "acceptance_criteria": [
+            "All modem signals work",
+            "Status bits reflect pin state",
+            "Interrupts fire on changes"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "interrupt_handling",
+      "todos": [
+        {
+          "title": "Implement TX Interrupts",
+          "description": "Implement transmit-related interrupts",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "TX FIFO empty interrupt",
+            "TX FIFO threshold interrupt",
+            "TX complete interrupt",
+            "Individual enable bits"
+          ],
+          "acceptance_criteria": [
+            "All TX interrupts work",
+            "Can be individually enabled",
+            "Timing is correct"
+          ]
+        },
+        {
+          "title": "Implement RX Interrupts",
+          "description": "Implement receive-related interrupts",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "RX FIFO not empty interrupt",
+            "RX FIFO threshold interrupt",
+            "RX timeout interrupt",
+            "Individual enable bits"
+          ],
+          "acceptance_criteria": [
+            "All RX interrupts work",
+            "Timeout works correctly",
+            "Can be individually enabled"
+          ]
+        },
+        {
+          "title": "Implement Error Interrupts",
+          "description": "Implement error condition interrupts",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Overrun error interrupt",
+            "Framing error interrupt",
+            "Parity error interrupt",
+            "Break detection interrupt"
+          ],
+          "acceptance_criteria": [
+            "All error interrupts work",
+            "Errors are detected correctly",
+            "Can be individually enabled"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "error_handling",
+      "todos": [
+        {
+          "title": "Implement Overrun Error Detection",
+          "description": "Detect and handle receive overrun errors",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Detect FIFO overflow",
+            "Set error flag",
+            "Preserve error state",
+            "Generate interrupt"
+          ],
+          "acceptance_criteria": [
+            "Overrun is detected reliably",
+            "Error flag is set",
+            "Data loss is handled"
+          ]
+        },
+        {
+          "title": "Implement Framing Error Detection",
+          "description": "Detect and handle framing errors",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Check stop bit validity",
+            "Set error flag per byte",
+            "Store in FIFO with data",
+            "Generate interrupt"
+          ],
+          "acceptance_criteria": [
+            "Framing errors detected",
+            "Error associated with byte",
+            "Flag is set correctly"
+          ]
+        },
+        {
+          "title": "Implement Parity Error Detection",
+          "description": "Detect and handle parity errors",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Calculate parity",
+            "Compare with received parity",
+            "Set error flag",
+            "Support odd/even/none"
+          ],
+          "acceptance_criteria": [
+            "Parity errors detected",
+            "All parity modes work",
+            "Error flag is set"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "testing",
+      "todos": [
+        {
+          "title": "Create Basic UART Communication Tests",
+          "description": "Test basic transmit and receive functionality",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Test single character TX/RX",
+            "Test continuous transmission",
+            "Test various baud rates",
+            "Test configuration changes"
+          ],
+          "acceptance_criteria": [
+            "Characters transmit correctly",
+            "Characters receive correctly",
+            "All configurations work"
+          ]
+        },
+        {
+          "title": "Create FIFO Operation Tests",
+          "description": "Test FIFO functionality thoroughly",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Test FIFO fill/empty",
+            "Test threshold interrupts",
+            "Test overflow behavior",
+            "Test FIFO disable/enable"
+          ],
+          "acceptance_criteria": [
+            "FIFO operates correctly",
+            "Thresholds work properly",
+            "Overflow handled correctly"
+          ]
+        },
+        {
+          "title": "Create Error Condition Tests",
+          "description": "Test all error detection mechanisms",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Force overrun conditions",
+            "Test framing errors",
+            "Test parity errors",
+            "Test break detection"
+          ],
+          "acceptance_criteria": [
+            "All errors detected",
+            "Error flags set correctly",
+            "Recovery works properly"
+          ]
+        }
+      ]
+    }
+  ],
+  "optional_features": [
+    {
+      "feature": "DMA Support",
+      "todos": [
+        {
+          "title": "Implement DMA Request Signals",
+          "description": "Generate DMA requests for efficient data transfer",
+          "priority": "medium",
+          "effort_estimate": "large"
+        }
+      ]
+    },
+    {
+      "feature": "Auto-baud Detection",
+      "todos": [
+        {
+          "title": "Implement Auto-baud Detection",
+          "description": "Automatically detect baud rate from incoming data",
+          "priority": "low",
+          "effort_estimate": "large"
+        }
+      ]
+    },
+    {
+      "feature": "IrDA Support",
+      "todos": [
+        {
+          "title": "Implement IrDA Mode",
+          "description": "Support for IrDA infrared communication",
+          "priority": "low",
+          "effort_estimate": "extra-large"
+        }
+      ]
+    },
+    {
+      "feature": "RS-485 Support",
+      "todos": [
+        {
+          "title": "Implement RS-485 Mode",
+          "description": "Support for RS-485 with automatic direction control",
+          "priority": "low",
+          "effort_estimate": "medium"
+        }
+      ]
+    }
+  ]
+}

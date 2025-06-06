@@ -1,0 +1,224 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Step 2: Data Extraction Schema",
+  "description": "Schema for validating extracted peripheral data from documentation",
+  "type": "object",
+  "properties": {
+    "peripheral_name": {
+      "type": "string",
+      "description": "Name of the peripheral"
+    },
+    "peripheral_type": {
+      "type": "string",
+      "enum": ["GPIO", "UART", "Timer", "DMA", "SPI", "I2C", "ADC", "PWM", "CAN", "Ethernet", "Other"],
+      "description": "Type of peripheral"
+    },
+    "base_addresses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Instance name (e.g., 'UART0', 'TIMER1')"
+          },
+          "address": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Base address in hexadecimal format"
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Memory region size in hexadecimal"
+          }
+        },
+        "required": ["name", "address"]
+      }
+    },
+    "registers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Register name"
+          },
+          "offset": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Offset from base address"
+          },
+          "size": {
+            "type": "integer",
+            "enum": [8, 16, 32, 64],
+            "description": "Register size in bits"
+          },
+          "access": {
+            "type": "string",
+            "enum": ["RW", "RO", "WO", "W1C", "W1S", "RC", "RS", "RW1C", "RW1S"],
+            "description": "Access type"
+          },
+          "reset_value": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Reset value in hexadecimal"
+          },
+          "description": {
+            "type": "string",
+            "description": "Register description"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Field name"
+                },
+                "bits": {
+                  "type": "string",
+                  "pattern": "^([0-9]+|[0-9]+:[0-9]+)$",
+                  "description": "Bit position(s) (e.g., '5' or '7:4')"
+                },
+                "access": {
+                  "type": "string",
+                  "enum": ["RW", "RO", "WO", "W1C", "W1S", "RC", "RS"],
+                  "description": "Field access type"
+                },
+                "reset_value": {
+                  "type": ["string", "integer"],
+                  "description": "Field reset value"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Field description"
+                },
+                "values": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Enumerated values for this field"
+                }
+              },
+              "required": ["name", "bits", "description"]
+            }
+          }
+        },
+        "required": ["name", "offset", "size", "access", "description"]
+      }
+    },
+    "interrupts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Interrupt name"
+          },
+          "number": {
+            "type": "integer",
+            "description": "Interrupt number/vector"
+          },
+          "description": {
+            "type": "string",
+            "description": "Interrupt description"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": ["level-high", "level-low", "edge-rising", "edge-falling", "edge-both"],
+            "description": "Interrupt trigger type"
+          }
+        },
+        "required": ["name", "description"]
+      }
+    },
+    "clocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Clock name"
+          },
+          "source": {
+            "type": "string",
+            "description": "Clock source"
+          },
+          "frequency": {
+            "type": "string",
+            "description": "Clock frequency or range"
+          },
+          "configurable": {
+            "type": "boolean",
+            "description": "Whether clock is configurable"
+          }
+        },
+        "required": ["name"]
+      }
+    },
+    "dma_channels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "channel_number": {
+            "type": "integer",
+            "description": "DMA channel number"
+          },
+          "name": {
+            "type": "string",
+            "description": "Channel name or purpose"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["tx", "rx", "bidirectional"],
+            "description": "DMA direction"
+          }
+        },
+        "required": ["channel_number"]
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of key features of the peripheral"
+    },
+    "operating_modes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Mode name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Mode description"
+          },
+          "configuration": {
+            "type": "object",
+            "description": "Configuration requirements for this mode"
+          }
+        },
+        "required": ["name", "description"]
+      }
+    },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Other peripherals or systems this peripheral depends on"
+    }
+  },
+  "required": ["peripheral_name", "peripheral_type", "registers"]
+}

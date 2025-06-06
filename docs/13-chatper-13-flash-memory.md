@@ -1,0 +1,932 @@
+### Chatper 13 Flash Memory
+
+## 13.1 Introduction
+
+This section provides information about the Flash bus interface unit (FBIU) and the Flash memory block of the MPC5553/MPC5554.
+
+## 13.1.1 Block Diagram
+
+Figure 13-1 shows a block diagram of the Flash memory module. The FBIU is addressed through the system bus while the Flash control and status registers are addressed through the slave (peripheral) bus.
+
+Figure 13-1. Flash System Block Diagram
+
+<!-- image -->
+
+## 13.1.2 Overview
+
+The Flash module serves as electrically programmable and erasable non-volatile memory (NVM) that is ideal for program and data storage for single-chip applications allowing for field reprogramming without requiring  external  programming  voltage  sources.  The  module  is  a  solid-state  silicon  memory  device consisting of blocks of single-transistor storage elements.
+
+The MPC5553/MPC5554 Flash contains a Flash bus interface unit (FBIU) and a Flash memory array. The Flash BIU interfaces the system bus to a dedicated Flash memory array controller. The FBIU supports a 64-bit data bus width at the system bus port, and a 256-bit read data interface to Flash memory. If enabled, the  Flash  BIU  contains  a  two-entry,  256-bit  prefetch  buffer  and  a  prefetch  controller  that  prefetches sequential lines of data from the Flash array into the buffer. Prefetch buffer hits allow no-wait responses. Normal Flash  array  accesses  are  registered  in  the  FBIU  and  are  forwarded  to  the  system  bus  on  the following cycle, incurring at least three wait states (depending on the frequency), with additional wait states being determined by FLASH\_BUICR[RWSC] (see Table 13-14).
+
+## Flash Memory
+
+Prefetch operations can be automatically controlled, and can be restricted to servicing a single bus master. Prefetches can also be restricted to being triggered for instruction or data accesses.
+
+The Flash memory block is arranged as two functional units, the first being the Flash core. The Flash core is composed of arrayed non-volatile storage elements, sense amplifiers, row selects, column selects, charge pumps, ECC logic and redundancy logic. The arrayed storage elements in the Flash core are subdivided into physically separate units referred to as blocks.
+
+The second functional unit of Flash memory is the memory interface (MI). The MI contains the registers and logic that control the operation of the Flash core. The MI is also the interface between the Flash module and the FBIU. The FBIU connects the MPC5553/MPC5554 system bus to the Flash module, and provides all system level customization and configuration functionality.
+
+The Flash array has three address spaces. Low address space (LAS) is 256-Kbytes in size. Mid address space (MAS) is also 256-Kbytes in size. High address space (HAS) is 1.5 Mbyte in size in the MPC5554, and 1.0 MBytes in the MPC5553. Total address space is 2.0 MBytes for the MPC5554 and 1.5 Mbytes for the MPC5553.
+
+## Flash Array Blocks
+
+Low Address Space -256 Kbytes
+
+Mid Address Space -256 Kbytes
+
+High Address Space -1.5 Mbytes in the MPC5554 -1.0 Mbytes in the MPC5553
+
+Figure 13-2. Flash Array Diagram
+
+Low Address Space
+
+Mid Address Space
+
+High Address Space
+
+## 13.1.3 Features
+
+The following list summarizes the key features of the FBIU:
+
+- · The FBIU system bus interface supports a 64-bit data bus. Byte, half-word, word, and double-word reads are supported. Only aligned word and double-word writes are supported.
+- · The FBIU provides configurable read buffering and line prefetch support. Two line read buffers (256 bits wide) and a prefetch controller are used to support single-cycle read responses for hits in the buffers.
+- · The FBIU provides hardware and software configurable read and write access protections on a per-master basis.
+- · The FBIU interface to the Flash array controller is pipelined with a depth of 1.
+- · The FBIU allows configurable access timing.
+- · The FBIU provides multiple-mapping support and mapping-based block access timing (0-31 additional cycles) allowing for emulation of other memory types.
+
+The Flash memory array has the following features:
+
+- · Software programmable block program/erase restriction control for low, mid, and high address spaces.
+- · Erase of selected blocks.
+- · ECC with single-bit correction, double-bit detection.
+- · Page program of 1 to 8 consecutive 32-bit words within a page (recommended minimum is 2 words due to ECC).
+- · Embedded hardware program and erase algorithm.
+- · Read while write with multiple partitions.
+- · Stop mode for low power stand-by.
+- · Erase suspend, program suspend, and erase-suspended program.
+- · Automotive Flash that meets automotive endurance and reliability requirements. Shadow information is stored in a non-volatile shadow block.
+- · Independent program/erase of the shadow block.
+
+## 13.1.4 Modes of Operation
+
+## 13.1.4.1 User Mode
+
+User mode is the default operating mode of the Flash memory block. In this mode, it is possible to read, write, program, and erase the Flash.  Refer to Section 13.4.2, 'Flash Memory Array: User Mode.'
+
+## 13.1.4.2 Stop Mode
+
+In  stop  mode  (FLASH\_MCR[STOP] = 1), all DC current sources in the Flash are disabled. Refer to Section 13.4.3, 'Flash Memory Array: Stop Mode.'
+
+## 13.2 External Signal Description
+
+Table 13-1 shows a list of signals required for Flash.
+
+Table 13-1. Signal Properties
+
+| Name    | Function                         | Reset State   |
+|---------|----------------------------------|---------------|
+| V FLASH | Flash read power supply          | NA            |
+| V PP    | Flash program/erase power supply | NA            |
+
+## 13.2.1 Voltage for Flash Only (V FLASH)
+
+VFLASH  is a supply required for reads of the Flash core. This voltage is specified as 3.3V with a tolerance of +/- 0.3V.
+
+## 13.2.2 Program and Erase Voltage for Flash Only (V PP )
+
+VPP  is a supply required for program and erase of the Flash core. This voltage is specified as 5V with a tolerance of -0.5V/+0.25V during program and erase operations. V PP  is required at all times, even during normal reads of Flash memory. During read operations, V PP  can be as high as 5.3V and as low as 3.0V.
+
+## 13.3 Memory Map/Register Description
+
+The  Flash  BIU  occupies  a  512-Mbyte  portion  of  the  address  space.  The  actual  Flash  array  is multiply-mapped within this space.
+
+The MPC5553/MPC5554 internal flash has a feature that allows the internal flash timing to be modified to emulate an external memory, hence the name, external emulation mode. The upper 5 address lines are used to provide additional timing control that allows the FBIU response timing on the system bus (which must  be  controlled  in  order  to  provide  for  timing  emulation  of  alternate  memory  types).  Refer  to Figure 13-3.
+
+```
+0bYYYYY_0000_0000_0000_0000_0000_0000 -YYYYY - additional primary wait-states bYYYYY_1111_1111_1111_1111_1111_1111 0
+```
+
+Flash Array Access or
+
+```
+Flash Shadow Row Access
+```
+
+## Figure 13-3. Flash BIU Address Scheme
+
+This feature allows calibration parameters to be tested using an external memory; and then in production, the internal flash access timing is modified to match timing of the external memory. The access time of the internal flash is lengthened based on the address range being accessed. To access an area with a slower access time, the address is modified per Table 13-2.
+
+Table 13-2. Internal Flash External Emulation Mode
+
+| Address Range   | Address Range   |   YYYYY |   Wait States |
+|-----------------|-----------------|---------|---------------|
+| 0x0000_0000     | 0x001F_FFFF     |   00000 |             0 |
+| 0x0100_0000     | 0x011F_FFFF     |   01000 |             8 |
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 13-2. Internal Flash External Emulation Mode  (continued)
+
+| Address Range   | Address Range   |   YYYYY |   Wait States |
+|-----------------|-----------------|---------|---------------|
+| 0x0200_0000     | 0x021F_FFFF     |   10000 |            16 |
+| 0x0300_0000     | 0x031F_FFFF     |   11000 |            24 |
+| 0x0400_0000     | 0x041F_FFFF     |   00001 |             1 |
+| 0x0500_0000     | 0x051F_FFFF     |   01001 |             9 |
+| 0x0600_0000     | 0x061F_FFFF     |   10001 |            17 |
+| 0x0700_0000     | 0x071F_FFFF     |   11001 |            25 |
+| 0x0800_0000     | 0x081F_FFFF     |   00010 |             2 |
+| 0x0900_0000     | 0x091F_FFFF     |   01010 |            10 |
+| 0x0A00_0000     | 0x0A1F_FFFF     |   10010 |            18 |
+| 0x0B00_0000     | 0x0B1F_FFFF     |   11010 |            26 |
+| 0x0C00_0000     | 0x0C1F_FFFF     |   00011 |             3 |
+| 0x0D00_0000     | 0x0D1F_FFFF     |   01011 |            11 |
+| 0x0E00_0000     | 0x0E1F_FFFF     |   10011 |            19 |
+| 0x0F00_0000     | 0x0F1F_FFFF     |   11011 |            27 |
+| 0x1000_0000     | 0x101F_FFFF     |   00100 |             4 |
+| 0x1100_0000     | 0x111F_FFFF     |   01100 |            12 |
+| 0x1200_0000     | 0x121F_FFFF     |   10100 |            20 |
+| 0x1300_0000     | 0x131F_FFFF     |   11100 |            28 |
+| 0x1400_0000     | 0x141F_FFFF     |   00101 |             5 |
+| 0x1500_0000     | 0x151F_FFFF     |   01101 |            13 |
+| 0x1600_0000     | 0x161F_FFFF     |   10101 |            21 |
+| 0x1700_0000     | 0x171F_FFFF     |   11101 |            29 |
+| 0x1800_0000     | 0x181F_FFFF     |   00110 |             6 |
+| 0x1900_0000     | 0x191F_FFFF     |   01110 |            14 |
+| 0x1A00_0000     | 0x1A1F_FFFF     |   10110 |            22 |
+| 0x1B00_0000     | 0x1B1F_FFFF     |   11110 |            30 |
+| 0x1C00_0000     | 0x1C1F_FFFF     |   00111 |             7 |
+| 0x1D00_0000     | 0x1D1F_FFFF     |   01111 |            15 |
+| 0x1E00_0000     | 0x1E1F_FFFF     |   10111 |            23 |
+| 0x1F00_0000     | 0x1F1F_FFFF     |   11111 |            31 |
+
+## 13.3.1 Flash Memory Map
+
+Table 13-3 shows the Flash array memory map and how it is mapped assuming byte addressing.
+
+## Flash Memory
+
+Base addresses for the MPC5554 and the MPC5553 are the following:
+
+- · Shadow base address = 0x00FF\_FC00
+- · Array base address = 0x0000\_0000
+- · Control registers base address = 0xC3F8\_8000
+
+Table 13-3. Module Flash Array Memory Map
+
+| Byte Address                                                                                      | Use                                                               | Access   |
+|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------|----------|
+| Shadow base + 0x00_0000- Shadow base + 0x00_03FF                                                  | Shadow block space (1024 Bytes)                                   | User     |
+| Array Base + 0x00_0000- Array Base + 0x03_FFFF                                                    | Low address space (256 Kbytes)                                    | User     |
+| Array Base + 0x04_0000- Array Base + 0x07_FFFF                                                    | Mid address space (256 Kbytes)                                    | User     |
+| Array Base + 0x08_0000 to Array Base + 0x1F_FFFF (MPC5554) or to Array Base + 0x17_FFFF (MPC5553) | High address space (1.5 Mbyte in MPC5554 or 1.0 Mbyte in MPC5553) | User     |
+
+Table 13-4 shows how the array is partitioned into three address spaces - low, mid, and high - and into partitions and blocks.
+
+## Table 13-4. Flash Partitions
+
+| Address                | Use                                      | Block   | Size   |   Partition |
+|------------------------|------------------------------------------|---------|--------|-------------|
+| Array Base + 0x00_0000 | Low Address Space                        | L0      | 16K    |           1 |
+| Array Base + 0x00_4000 | Low Address Space                        | L1      | 48K    |           1 |
+| Array Base + 0x01_0000 | Low Address Space                        | L2      | 48K    |           1 |
+| Array Base + 0x01_C000 | Low Address Space                        | L3      | 16K    |           1 |
+| Array Base + 0x02_0000 | Low Address Space                        | L4      | 64K    |           2 |
+| Array Base + 0x03_0000 | Low Address Space                        | L5      | 64K    |           2 |
+| Array Base + 0x04_0000 | Mid Address Space                        | M0      | 128K   |           3 |
+| Array Base + 0x06_0000 | Mid Address Space                        | M1      | 128K   |           3 |
+| Array Base + 0x08_0000 | High Address Space (MPC5554 and MPC5553) | H0      | 128K   |           4 |
+| Array Base + 0x0A_0000 | High Address Space (MPC5554 and MPC5553) | H1      | 128K   |           4 |
+| Array Base + 0x0C_0000 | High Address Space (MPC5554 and MPC5553) | H2      | 128K   |           5 |
+| Array Base + 0x0E_0000 | High Address Space (MPC5554 and MPC5553) | H3      | 128K   |           5 |
+| Array Base + 0x10_0000 | High Address Space (MPC5554 and MPC5553) | H4      | 128K   |           6 |
+| Array Base + 0x12_0000 | High Address Space (MPC5554 and MPC5553) | H5      | 128K   |           6 |
+| Array Base + 0x14_0000 | High Address Space (MPC5554 and MPC5553) | H6      | 128K   |           7 |
+| Array Base + 0x16_0000 | High Address Space (MPC5554 and MPC5553) | H7      | 128K   |           7 |
+
+Table 13-4. Flash Partitions (continued)
+
+| Address                           | Use                                               | Block   | Size   | Partition   |
+|-----------------------------------|---------------------------------------------------|---------|--------|-------------|
+| Array Base + 0x18_0000            | High Address Space (MPC5554 Only)                 | H8 1    | 128K   | 8 1         |
+| Array Base + 0x1A_0000            | High Address Space (MPC5554 Only)                 | H9 1    | 128K   | 8 1         |
+| Array Base + 0x1C_0000            | High Address Space (MPC5554 Only)                 | H10 1   | 128K   | 9 1         |
+| Array Base + 0x1E_0000            | High Address Space (MPC5554 Only)                 | H11 1   | 128K   | 9 1         |
+| Array Base + 0xFF_FC00            | Shadow block space                                | S       | 472    | All 2       |
+| Array Base+ 0xFF_FDD8             | Flash shadow row, serial passcode                 | S       | 8      | All 2       |
+| Array Base+ 0xFF_FDE0             | Flash shadow row, control word                    | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDE4             | For general use                                   | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDE8             | Flash shadow row, FLASH_LMLR reset configuration  | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDEC             | For general use                                   | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDF0             | Flash shadow row, FLASH_HLR reset configuration   | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDF4             | For general use                                   | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDF8             | Flash Shadow Row, FLASH_SLMLR reset configuration | S       | 4      | All 2       |
+| Array Base+ 0xFF_FDFC - 0xFF_FFFF | For general use                                   | S       | 516    |             |
+
+1 Not available in the MPC5553; only available in the MPC5554.
+
+2 The shadow row does not support RWW. See Section 13.4.2.5, 'Flash Shadow Block.
+
+Table 13-5 shows the register set for the Flash module.
+
+Table 13-5. Module Register Memory Map
+
+| Byte Address         | Register Name   | Register Description                                   |   Size (bits) |
+|----------------------|-----------------|--------------------------------------------------------|---------------|
+| Register Base + 0x00 | FLASH_MCR       | Module configuration register                          |            32 |
+| Register Base + 0x04 | FLASH_LMLR      | Low/mid address space block locking register           |            32 |
+| Register Base + 0x08 | FLASH_HLR       | High address space block locking register              |            32 |
+| Register Base + 0x0C | FLASH_SLMLR     | Secondary low/mid address space block locking register |            32 |
+| Register Base + 0x10 | FLASH_LMSR      | Low/mid address space block select register            |            32 |
+| Register Base + 0x14 | FLASH_HSR       | High address space block select register               |            32 |
+| Register Base + 0x18 | FLASH_AR        | Address register                                       |            32 |
+| Register Base + 0x1C | FLASH_BIUCR     | Flash bus interface unit control register              |            32 |
+
+## MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 13-5. Module Register Memory Map (continued)
+
+| Byte Address                                 | Register Name   | Register Description                                | Size (bits)   |
+|----------------------------------------------|-----------------|-----------------------------------------------------|---------------|
+| Register Base + 0x20                         | FLASH_BIUAPR    | Flash bus interface unit access protection register | 32            |
+| Register Base +0x30 to Register Base +0x7FFF | -               | Reserved                                            | -             |
+
+## 13.3.2 Register Descriptions
+
+The Flash registers are detailed in the following sections.
+
+## 13.3.2.1 Module Configuration Register (FLASH\_MCR)
+
+A number of module configuration register (FLASH\_MCR) bits are protected from a write while another bit or set of bits are in a specific state. These locks are discussed in relationship to each bit in this section. Simultaneously  writing  bits  which  lock  each  other  out  is  discussed  in  Section 13.3.2.1.1,  'MCR Simultaneous Register Writes.' The MCR is always available to be read except when the Flash module is disabled.
+
+Figure 13-4. Module Configuration Register (FLASH\_MCR)
+
+<!-- image -->
+
+|               | 0                           | 1                           | 2                           | 3                           | 4                           | 5                           | 6                           | 7                           | 8                           | 9                           | 10                          | 11                          | 12                          | 13                          | 14                          | 15                          |
+|---------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| R             | 0                           | 0                           | 0                           | 0                           |                             | SIZE                        |                             |                             | 0                           | LAS                         | LAS                         |                             | 0                           | 0                           | 0                           | MAS                         |
+| W             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| MPC5554 Reset | 0                           | 0                           | 0                           | 0                           | 0                           | 1                           | 1                           | 1                           | 0                           | 1                           | 1                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| MPC5553 Reset | 0                           | 0                           | 0                           | 0                           | 0                           | 1                           | 0                           | 1                           | 0                           | 1                           | 1                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr      | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 |
+|               | 16                          | 17                          | 18                          | 19                          | 20                          | 21                          | 22                          | 23                          | 24                          | 25                          | 26                          | 27                          | 28                          | 29                          | 30                          | 31                          |
+| R             | EER                         | RWE                         | 1                           | 1                           | PEAS                        | DONE                        | PEG                         | 0                           | 0                           | STOP                        | 0                           | PGM                         | PSUS                        | ERS                         | ESUS                        | EHV                         |
+|               | w1c                         | w1c                         | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           | W                           |
+| MPC5554 Reset | 0                           | 0                           | 1                           | 1                           | 0                           | 1                           | 1                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| MPC5553 Reset | 0                           | 0                           | 1                           | 1                           | 0                           | 1                           | 1                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr      | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 | Base (0xC3F8_8000) + 0x0000 |
+
+Table 13-6. FLASH\_MCR Field Descriptions
+
+| Bits   | Name   | Description   |
+|--------|--------|---------------|
+| 0-3    | -      | Reserved.     |
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 13-6. FLASH\_MCR Field Descriptions (continued)
+
+| Bits   | Name       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+|--------|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 4-7    | SIZE [0:3] | Array space size. Dependent upon the size of the Flash module. All possible values of SIZE and the configuration to which each value corresponds are shown below. SIZE is read only. 0101 Total array size is 1.5 Mbytes (MPC5553) 0111 Total array size is 2 Mbytes (MPC5554)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 8      | -          | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 9-11   | LAS [0:2]  | Low address space. Corresponds to the configuration of the low address space. All possible values of LAS and the configuration to which each value corresponds are shown below. LAS is read only. 110 The LAS value of 110 provides two 16-Kbyte blocks, two 48-Kbyte blocks, and two 64-Kbyte blocks. This is the space configuration for both the MPC5553 and the MPC5554.                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| 12-14  | -          | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 15     | MAS        | Mid address space size. Corresponds to the configuration of the mid address space. MAS is read only. The value of the parameter for this device is shown in bold. Note: The MAS encoding for the MPC5554 and for the MPC5553 is 0. 0 Two 128-Kbyte blocks are available                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| 16     | EER        | ECCevent error. Provides information on previous reads; if a double bit detection occurred, the EER bit will be set to a 1. This bit must then be cleared, or a reset must occur before this bit will return to a 0 state. This bit may not be set by the user. In the event of a single bit detection and correction, this bit will not be set. If EER is not set, or remains 0, this indicates that all previous reads (from the last reset, or clearing of EER) were correct. Since this bit is an error flag, it must be cleared to a 0 by writing a 1 to the register location. A write of 0 will have no effect. 0 Reads are occurring normally. 1 An ECC Error occurred during a previous read. Note: This bit can be set on speculative prefetches that cause double bit error detection. |
+| 17     | RWE        | Read while write event error. Provides information on previous RWWreads. If a read while write error occurs, this bit will be set to 1. This bit must then be cleared, or a reset must occur before this bit will return to a 0 state. This bit may not be written to a 1 by the user. If RWE is not set, or remains 0, this indicates that all previous RWWreads (from the last reset, or clearing of RWE) were correct. Since this bit is an error flag, it must be cleared to a 0 by writing a 1 to the register location. A write of 0 will have no effect. 0 Reads are occurring normally. 1 A read while write error occurred during a previous read.                                                                                                                                       |
+| 18-19  | -          | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 20     | PEAS       | Program/erase access space. Indicates which space is valid for program and erase operations, either main array space or shadow space. PEAS is read only. 0 Shadow address space is disabled for program/erase and main address space enabled 1 Shadow address space is enabled for program/erase and main address space disabled.                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+
+Table 13-6. FLASH\_MCR Field Descriptions (continued)
+
+| Bits   | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|--------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 21     | DONE   | State machine status. Indicates if the Flash module is performing a high voltage operation. DONE is set to a 1 on termination of the Flash module reset and at the end of program and erase high voltage sequences. 0 Flash is executing a high voltage operation. 1 Flash is not executing a high voltage operation.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 22     | PEG    | Program/erase good. Indicates the completion status of the last Flash program or erase sequence for which high voltage operations were initiated. The value of PEG is updated automatically during the program and erase high voltage operations. Aborting a program/erase high voltage operation will cause PEG to be cleared, indicating the sequence failed. PEG is set to a 1 when the module is reset. PEG is read only. The value of PEG is valid only when PGM = 1 and/or ERS = 1 and after DONE has transitioned from 0 to 1 due to an abort or the completion of a program/erase operation. PEG is valid until PGM/ERS makes a 1 to 0 transition or EHV makes a 0 to 1 transition. The value in PEG is not valid after a 0 to 1 transition of DONE caused by PSUS or ESUS being set to logic 1. A diagram presenting PEG valid times is presented in Figure 13-5. If PGM and ERS are both 1 when DONE makes a qualifying 0 to 1 transition the value of PEG indicates the completion status of the PGM sequence. This happens in an erase-suspended program operation. 0 Program or erase operation failed. 1 Program or erase operation successful. |
+| 23-24  | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 25     | STOP   | Stop mode enabled. Puts the Flash into stop mode. Changing the value in STOP from a 0 to a 1 places the Flash module in stop mode. A1to 0 transition of STOPreturns the Flash module to normal operation. STOPmaybewritten only when PGMandERSarelow.When STOP=1,only the STOPbit in the MCRcanbewritten. In STOPmodeall address spaces, registers, and register bits are deactivated except for the FLASH_MCR[STOP] bit. 0 Flash is not in stop mode; the read state is active. 1 Flash is in stop mode.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 26     | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 27     | PGM    | Program. Used to set up Flash for a program operation. A 0 to 1 transition of PGMinitiates an Flash program sequence. A 1 to 0 transition of PGMendsthe program sequence. PGM can be set only under one of the following conditions: GLYPH<127> User mode read (STOP and ERS are low). GLYPH<127> Erase suspend 1 (ERS and ESUS are 1) with EHV low. PGMcanbecleared by the user only when EHVarelow and DONEishigh. PGMiscleared on reset. 0 Flash is not executing a program sequence. 1 Flash is executing a program sequence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 28     | PSUS   | Program suspend. Indicates the Flash module is in program suspend or in the process of entering a suspend state. The Flash module is in program suspend when PSUS = 1 and DONE = 1. PSUS can be set high only when PGMand EHV are high. A 0 to 1 transition of PSUS starts the sequence which sets DONE and places the Flash in program suspend. PSUScan be cleared only when DONEandEHVarehigh. A1to 0 transition of PSUS with EHV = 1 starts the sequence which clears DONE and returns the Flash module to program. The Flash module cannot exit program suspend and clear DONE while EHV is low. PSUS is cleared on reset. 0 Program sequence is not suspended. 1 Program sequence is suspended.                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+## MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+## Table 13-6. FLASH\_MCR Field Descriptions (continued)
+
+|   Bits | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|--------|--------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|     29 | ERS    | Erase. Used to set up Flash for an erase operation. A 0 to 1 transition of ERS initiates an Flash erase sequence. A 1 to 0 transition of ERS ends the erase sequence. ERS can be set only in a normal operating mode read (STOP and PGM are low). ERS can be cleared by the user only when ESUS and EHVare low and DONEis high. ERSis cleared on reset. 0 Flash is not executing an erase sequence. 1 Flash is executing an erase sequence.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|     30 | ESUS   | Erase suspend. Indicates that the Flash module is in erase suspend or in the process of entering a suspend state. The Flash module is in erase suspend when ESUS = 1 and DONE = 1. ESUS can be set high only when ERS and EHV are high and PGM is low. A 0 to 1 transition of ESUS starts the sequence which sets DONE and places the Flash in erase suspend. ESUScanbecleared only when DONEandEHVarehigh and PGMislow. A 1 to 0 transition of ESUS with EHV = 1 starts the sequence which clears DONE and returns the Flash module to erase mode. The Flash module cannot exit erase suspend and clear DONE while EHV is low. ESUS is cleared on reset. 0 Erase sequence is not suspended. 1 Erase sequence is suspended.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|     31 | EHV    | Enable high voltage. Enables the Flash module for a high voltage program/erase operation. EHV is cleared on reset. EHV must be set after an interlock write to start a program/erase sequence. EHV may be set, initiating a program/erase, after an interlock write under one of the following conditions: GLYPH<127> Erase (ERS = 1, ESUS = 0). GLYPH<127> Program (ERS = 0, ESUS = 0, PGM = 1, PSUS = 0). GLYPH<127> Erase-suspended program (ERS = 1, ESUS = 1, PGM = 1, PSUS = 0). If a program operation is to be initiated while an erase is suspended the user must clear EHV while in erase suspend before setting PGM. In normal operation, a 1 to 0 transition of EHV with DONE high, PSUS and ESUS low terminates the current program/erase high voltage operation. When an operation is aborted 2 , there is a 1 to 0 transition of EHV with DONE low and the suspend bit for the current program/erase sequence low. Anabort causes the value of PEG to be cleared, indicating a failed program/erase; address locations being operated on by the aborted operation contain indeterminate data after an abort. Asuspended operation cannot be aborted. EHVmaybewritten during suspend. EHVmust be high for the Flash to exit suspend. EHVmaynot be written after a suspend bit is set high and before DONEhas transitioned high. EHVmaynot be set low after the current suspend bit is set low and before DONE has transitioned low. 0 Flash is not enabled to perform a high voltage operation. 1 Flash is enabled to perform a high voltage operation. |
+
+1 In an erase-suspended program, programming Flash locations in blocks which were being operated on in the erase may corrupt Flash core data. This should be avoided due to reliability implications.
+
+- 2 Aborting a high voltage operation will leave Flash core addresses in an indeterminate data state. This may be recovered by executing an erase on the affected blocks.
+
+Figure 13-5. PEG Valid Times
+
+<!-- image -->
+
+## 13.3.2.1.1 MCR Simultaneous Register Writes
+
+A number of MCR bits are protected against write when another bit or set of bits is in a specific state. These write  locks  are  covered  on  a  bit  by  bit  basis  in  Section 13.3.2.1,  'Module  Configuration  Register (FLASH\_MCR).' The write locks detailed in that section do not consider the effects of trying to write two or more bits simultaneously. The effects of writing bits simultaneously which would put the Flash module in an illegal state are detailed here.
+
+The Flash does not allow the user to write bits simultaneously which would put the device into an illegal state. This is implemented through a priority mechanism among the bits. The bit changing priorities are detailed in Table 13-7.
+
+Table 13-7. MCR Bit Set/Clear Priority Levels
+
+|   Priority Level | MCR Bits   |
+|------------------|------------|
+|                1 | STOP       |
+|                2 | ERS        |
+|                3 | PGM        |
+|                4 | EHV        |
+|                5 | ESUS, PSUS |
+
+If  the  user  attempts to write two or more MCR bits simultaneously then only the bit with the highest priority level will be written. Setting two bits with the same priority level is prevented by existing write locks and will not put the Flash in an illegal state.
+
+For  example,  setting  FLASH\_MCR[STOP]  and  FLASH\_MCR[PGM]  simultaneously  results  in  only FLASH\_MCR[STOP] being set. Attempting to clear FLASH\_MCR[EHV] while setting FLASH\_MCR[PSUS] will result in FLASH\_MCR[EHV] being cleared, while FLASH\_MCR[PSUS] will remain unaffected.
+
+## 13.3.2.2 Low/Mid Address Space Block Locking Register (FLASH\_LMLR)
+
+The low and mid address block locking register provides a means to protect blocks from being modified. These bits along with bits in the secondary LMLOCK field (FLASH\_SLMLR), determine if the block is locked from program or erase. An 'OR'' of FLASH\_LMLR and FLASH\_SLMLR determine the final lock  status.      See  Section 13.3.2.4,  'Secondary  Low/Mid  Address  Space  Block  Locking  Register (FLASH\_SLMLR)' for more information on FLASH\_SLMLR.
+
+## NOTE
+
+In  the  event  that  blocks  are  not  present  (due  to  configuration  or  total memory  size),  the  LOCK  bits  will  default  to  locked,  and  will  not  be writable.  The  reset  value  will  always  be  1  (independent  of  the  shadow block), and register writes will have no effect.
+
+<!-- image -->
+
+Figure 13-6. Low/Mid Address Space Block Locking Register (FLASH\_LMLR)
+
+Table 13-8. FLASH\_LMLR Field Descriptions
+
+| Bits   | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|--------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0      | LME    | Lowandmidaddress lock enable. Enables the locking register fields (SLOCK, MLOCKand LLOCK) to be set or cleared by register writes. This bit is a status bit only, and may not be written or cleared, and the reset value is 0. The method to set this bit is to write a password, and if the password matches, the LME bit will be set to reflect the status of enabled, and is enabled until a reset operation occurs. For LME, the password 0xA1A1_1111 must be written to the FLASH_LMLR. 0 Low and mid address locks are disabled, and cannot be modified. 1 Low and mid address locks are enabled and can be written. |
+| 1-10   | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 11     | SLOCK  | Shadow lock. Locks the shadow row from programs and erases. The SLOCK bit is not writable if a high voltage operation is suspended. Upon reset, information from the shadow row is loaded into the SLOCKbit. The SLOCKbit may be written as a register. Reset will cause the bits to go back to their shadow row value. The default value of the SLOCKbit (assuming the corresponding shadow row bit is erased) would be locked. SLOCK is not writable unless LME is high. 0 Shadow row is available to receive program and erase pulses. 1 Shadow row is locked for program and erase.                                    |
+
+Table 13-8. FLASH\_LMLR Field Descriptions (continued)
+
+| Bits   | Name         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+|--------|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 12-15  | MLOCK [0:3]  | Mid address block lock. A value of 1 in a bit of the lock register signifies that the corresponding block is locked for program and erase. A value of 0 in the lock register signifies that the corresponding block is available to receive program and erase pulses. Likewise the lock register is not writable if a high voltage operation is suspended. Upon reset, information from the shadow row is loaded into the block registers. The LOCK bits may be written as a register. Reset will cause the bits to go back to their shadow row value. The default value of the LOCK bits (assuming erased fuses) would be locked. In the event that blocks are not present (due to configuration or total memory size), the LOCK bits will default to locked, and will not be writable. The reset value will always be 1 (independent of the shadow row), and register writes will have no effect. MLOCK is not writable unless LME is high. As an example of how the LOCK bits are used, if a configuration has two 128-Kbyte blocks in the low address space (MCR-LAS = 3'b000), and four 64-Kbyte blocks in the mid address space (MCR-MAS = 1), the first 128-Kbyte block located at address Array Base + 0 will correspond to MLOCK0, the second 128-Kbyte block will correspond to MLOCK1. The first mid address space block (64 Kbytes) located at address Array Base + 40000h will correspond to MLOCK0,thesecondmid address space block will correspond to MLOCK1, the third mid address space block will correspond to MLOCK2, and the final mid address space block will correspond to MLOCK3. |
+| 16-31  | LLOCK [0:15] | Low address block lock. These bits have the same description and attributes as MLOCK. As an example of how the LLOCK bits are used, if a configuration has sixteen 16-Kbyte blocks in the low address space (MCR-LAS = 3'b011), the block residing at address Array Base + 0, will correspond to LLOCK0. The next 16-Kbyte block will correspond to LLOCK1, and so on up to LLOCK15.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+## 13.3.2.3 High Address Space Block Locking Register (FLASH\_HLR)
+
+The high address space block locking register provides a means to protect blocks from being modified.
+
+<!-- image -->
+
+|          | 0                           | 1                           | 2                           | 3                           | 4                           | 5                           | 6                           | 7                           | 8                           | 9                           | 10                          | 11                          | 12                          | 13                          | 14                          | 15                          |
+|----------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| R        | HBE                         | 0                           | 0                           | 0                           | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         |
+| Reg Addr | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 |
+|          | 16                          | 17                          | 18                          | 19                          | 20                          | 21                          | 22                          | 23                          | 24                          | 25                          | 26                          | 27                          | 28                          | 29                          | 30                          | 31                          |
+| R        | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       | HLOCK                       |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         |
+| Reg Addr | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 | Base (0xC3F8_8000) + 0x0008 |
+
+1 The reset value of these bits is determined by Flash values in the shadow row. An erased array will cause the reset value to be 1.
+
+Figure 13-7. High Address Space Block Locking Register (FLASH\_HLR)
+
+## Table 13-9. FLASH\_HLR Field Descriptions
+
+| Bits   | Name         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|--------|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0      | HBE          | High address lock enable. Enables the locking field (HLOCK) to be set or cleared by register writes. This bit is a status bit only, and may not be written or cleared, and the reset value is 0. The method to set this bit is to provide a password, and if the password matches, the HBE bit will be set to reflect the status of enabled, and is enabled until a reset operation occurs. For HBE, the password 0xB2B2_2222 must be written to FLASH_HLR. 0 High address locks are disabled, and cannot be modified. 1 High address locks are enabled to be written. |
+| 1-3    | -            | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| 4-31   | HLOCK [0:27] | High address space block lock. Has the same characteristics as MLOCK. See Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH_LMLR)' for more information. The block numbering for High Address space starts with HLOCK[0] and continues until all blocks are accounted. HLOCK is not writable unless HBE is set. In the event that blocks are not present (due to configuration or total memory size), the HLOCK bits will default to locked, and will not be writable.                                                                            |
+
+## 13.3.2.4 Secondary Low/Mid Address Space Block Locking Register (FLASH\_SLMLR)
+
+The FLASH\_SLMLR provides an alternative means to protect blocks from being modified. These bits along with bits in the LMLOCK field (FLASH\_LMLR), determine if the block is locked from program or erase.  An  'OR'  of  FLASH\_LMLR  and  FLASH\_SLMLR  determine  the  final  lock  status.      See Section 13.3.2.2,  'Low/Mid  Address  Space  Block  Locking  Register  (FLASH\_LMLR)'  for  more information on FLASH\_LMLR.
+
+<!-- image -->
+
+|          | 0                           | 1                           | 2                           | 3                           | 4                           | 5                           | 6                           | 7                           | 8                           | 9                           | 10                          | 11                          | 12                          | 13                          | 14                          | 15                          |
+|----------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| R        | SLE                         | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | SSLOCK                      |                             | SMLOCK                      | SMLOCK                      |                             |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         |
+| Reg Addr | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C |
+|          | 16                          | 17                          | 18                          | 19                          | 20                          | 21                          | 22                          | 23                          | 24                          | 25                          | 26                          | 27                          | 28                          | 29                          | 30                          | 31                          |
+| R        | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      | SLLOCK                      |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         | 1 1                         |
+| Reg Addr | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C | Base (0xC3F8_8000) + 0x000C |
+
+- 1 The reset value of these bits is determined by Flash values in the shadow row. An erased array will cause the reset value to be 1
+
+Figure 13-8. Secondary Low/Mid Address Space Block Locking Register (FLASH\_SLMLR)
+
+Table 13-10. FLASH\_SLMLR Field Descriptions
+
+| Bits   | Name          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+|--------|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0      | SLE           | Secondary low and mid address lock enable. Enables the secondary lock fields (SSLOCK, SMLOCK, and SLLOCK) to be set or cleared by register writes. This bit is a status bit only, and may not be written or cleared, and the reset value is 0. The method to set this bit is to provide a password, and if the password matches, the SLE bit will be set to reflect the status of enabled, and is enabled until a reset operation occurs. For SLE, the password 0xC3C3_3333 must be written to the FLASH_SLMLR. 0 Secondary low and mid address locks are disabled, and cannot be modified. 1 Secondary low and mid address locks are enabled to be written. |
+| 1-10   | -             | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 11     | SSLOCK        | Secondary shadow lock. An alternative method that may be used to lock the shadow row from programs and erases. SSLOCK has the same description as SLOCK in Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH_LMLR).' SSLOCK is not writable unless SLE is high.                                                                                                                                                                                                                                                                                                                                                                         |
+| 12-15  | SMLOCK [0:3]  | Secondary mid address block lock. Alternative method that may be used to lock the mid address space blocks from programs and erases. SMLOCK has the same description as MLOCK in section Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH_LMLR).' SMLOCK is not writable unless SLE is set. In the event that blocks are not present (due to configuration or total memory size), the SMLOCK bits will default to locked, and will not be writable.                                                                                                                                                                                    |
+| 16-31  | SLLOCK [0:15] | Secondary low address block lock. These bits are an alternative method that may be used to lock the low address space blocks from programs and erases. SLLOCK has the same description as LLOCK in Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH_LMLR). SLLOCK is not writable unless SLE is high. In the event that blocks are not present (due to configuration or total memory size), the SLLOCK bits will default to locked, and will not be writable.                                                                                                                                                                          |
+
+## 13.3.2.5 Low/Mid Address Space Block Select Register (FLASH\_LMSR)
+
+The FLASH\_LMSR provides a means to select blocks to be operated on during erase.
+
+Figure 13-9. Low/Mid Address Space Block Select Register (FLASH\_LMSR)
+
+|          | 0                           | 1                           | 2                           | 3                           | 4                           | 5                           | 6                           | 7                           | 8                           | 9                           | 10                          | 11                          | 12                          | 13                          | 14                          | 15                          |
+|----------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| R        | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |                             | MSEL                        | MSEL                        |                             |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 |
+|          | 16                          | 17                          | 18                          | 19                          | 20                          | 21                          | 22                          | 23                          | 24                          | 25                          | 26                          | 27                          | 28                          | 29                          | 30                          | 31                          |
+| R        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        | LSEL                        |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 | Base (0xC3F8_8000) + 0x0010 |
+
+## Table 13-11. FLASH\_LMSR Field Descriptions
+
+| Bits   | Name        | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|--------|-------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-11   | -           | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 12-15  | MSEL [0:3]  | Mid address space block select. Values in the selected register signify that a block(s) is or is not selected for erase. The reset value for the select registers is 0, or unselected. The blocks must be selected (or unselected) before doing an erase interlock write as part of the erase sequence. The select register is not writable once an interlock write is completed or if a high voltage operation is suspended. In the event that blocks are not present (due to configuration or total memory size), the corresponding SELECT bits will default to unselected, and will not be writable. The reset value will always be 0, and register writes will have no effect. A description of how blocks are numbered is detailed in Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH_LMLR).' 0b0000 Mid address space blocks are not selected for erase 0b0001 One mid address space block is selected for erase 0b0011 Two mid address space blocks are selected for erase |
+| 16-31  | LSEL [0:15] | Low address space block select. Used to select blocks in the low address space; these have the same description and attributes as the MSEL bits 0b0000 Low address space blocks are not selected for erase 0b0001 One low address space block is selected for erase 0b0011 Two low address space blocks are selected for erase 0b0111 Three low address space blocks are selected for erase 0b1111 Four low address space blocks are selected for erase 0b1_1111 Five low address space blocks are selected for erase 0b11_1111 Six low address space blocks are selected for erase                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+## 13.3.2.6 High Address Space Block Select Register (FLASH\_HSR)
+
+The FLASH\_HSR provides a means to select blocks to be operated on.
+
+Figure 13-10. High Address Space Block Select Register (FLASH\_HSR)
+
+<!-- image -->
+
+|          | 0                           | 1                           | 2                           | 3                           | 4                           | 5                           | 6                           | 7                           | 8                           | 9                           | 10                          | 11                          | 12                          | 13                          | 14                          | 15                          |
+|----------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| R        | 0                           | 0                           | 0                           | 0                           |                             |                             |                             |                             |                             | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 |
+|          | 16                          | 17                          | 18                          | 19                          | 20                          | 21                          | 22                          | 23                          | 24                          | 25                          | 26                          | 27                          | 28                          | 29                          | 30                          | 31                          |
+| R        | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       | HBSEL                       |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 | Base (0xC3F8_8000) + 0x0014 |
+
+## Table 13-12. FLASH\_HSR Field Descriptions
+
+| Bits   | Name         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|--------|--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-3    | -            | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| 4-31   | HBSEL [0:27] | High address space block select. Has the same characteristics as MSEL. For more information see Section 13.3.2.5, 'Low/Mid Address Space Block Select Register (FLASH_LMSR).' In both the MPC5553 and the MPC5554: 0b0000 High address space blocks are not selected for erase 0b0001 One high address space block is selected for erase 0b0011 Two high address space blocks are selected for erase 0b0111 Three high address space blocks are selected for erase 0b1111 Four high address space blocks are selected for erase 0b1_1111 Five high address space blocks are selected for erase 0b11_1111 Six high address space blocks are selected for erase 0b111_1111 Seven high address space blocks are selected for erase 0b1111_1111 Eight high address space blocks are selected for erase and in the MPC5554 only: 0b1_1111_1111 Nine high address space blocks are selected for erase 0b11_1111_1111 Ten high address space blocks are selected for erase 0b111_1111_1111 Eleven high address space blocks are selected for erase 0b1111_1111_1111 Twelve high address space blocks are selected for erase |
+
+## 13.3.2.7 Address Register (FLASH\_AR)
+
+The FLASH\_AR provides the first failing address in the event of ECC event error (FLASH\_MCR[EER] set), as well as providing the address of a failure that may have occurred in a state machine operation (FLASH\_MCR[PEG] cleared). ECC event errors take priority over state machine errors. This is especially valuable in the event of a RWW operation, where the read senses an ECC error and the state machine fails simultaneously. This address is always a double-word address that selects 64 bits.
+
+In normal operating mode, the FLASH\_AR is not writable.
+
+Figure 13-11. Address Register (FLASH\_AR)
+
+<!-- image -->
+
+|          | 0                           | 1                           | 2                           | 3                           | 4                           | 5                           | 6                           | 7                           | 8                           | 9                           | 10                          | 11                          | 12                          | 13                          | 14                          | 15                          |
+|----------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|-----------------------------|
+| R        | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 |
+|          | 16                          | 17                          | 18                          | 19                          | 20                          | 21                          | 22                          | 23                          | 24                          | 25                          | 26                          | 27                          | 28                          | 29                          | 30                          | 31                          |
+| R        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | ADDR                        | 0                           | 0                           | 0                           |
+| W        |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |                             |
+| Reset    | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           | 0                           |
+| Reg Addr | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 | Base (0xC3F8_8000) + 0x0018 |
+
+Table 13-13. FLASH\_AR Field Descriptions
+
+| Bits   | Name        | Description                                                                                                                                      |
+|--------|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-9    | -           | Reserved.                                                                                                                                        |
+| 10-28  | ADDR [3:21] | Double-word address of first failing address in the event of an ECC error, or the address of a failure occurring during state machine operation. |
+| 29-31  | ADDR [0:2]  | Always read as 0.                                                                                                                                |
+
+## 13.3.2.8 Flash Bus Interface Unit Control Register (FLASH\_BIUCR)
+
+The FLASH\_BIUCR is the control register for the set up and control of the Flash interface. This register must not be written while executing from Flash. This register should only be written in a 32-bit write operation.
+
+Figure 13-12. Flash Bus Interface Unit Control Register (FLASH\_BIUCR)
+
+<!-- image -->
+
+1 M4PFE is functional only in the MPC5553.
+
+Table 13-14. FLASH\_BIUCR Field Descriptions
+
+| Bits   | Name    | Description                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|--------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-11   | -       | Reserved                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 12-15  | M n PFE | Master n prefetch enable. Used to control whether prefetching may be triggered based on the master ID of a requesting master. These bits are cleared by hardware reset. Refer to Table 7-1. 0 No prefetching may be triggered by this master 1 Prefetching may be triggered by this master These fields are identified as follows: M4PFE = FEC (in MPC5553 only) M3PFE= EBI M2PFE= eDMA M1PFE= Nexus M0PFE= e200z6 core              |
+| 16-18  | APC 1   | Address pipelining control. Used to control the number of cycles between pipelined access requests. This field must be set to a value corresponding to the operating frequency of the system clock. The required settings are documented in Table 13-15. 000 Reserved 001 Access requests require one hold cycle 010 Access requests require two hold cycles ... 110 Access requests require 6 hold cycles 111 No address pipelining |
+| 19-20  | WWSC 1  | Write wait state control. Used to control the timing for array writes. This field must be set to a value corresponding to the operating frequency of the system clock. The required settings are documented in Table 13-15. 00 Reserved 01 One wait state 10 Two wait states 11 Three wait states                                                                                                                                    |
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+## Table 13-14. FLASH\_BIUCR Field Descriptions (continued)
+
+| Bits   | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+|--------|--------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 21-23  | RWSC 1 | Read wait state control . Used to control the Flash array access time for array reads. This field must be set to a value corresponding to the operating frequency of the system clock. The required settings are documented in Table 13-15. 000 Zero wait states 001 One wait state ... 111 Seven wait states                                                                                                                                                                                                                                                             |
+| 24-25  | DPFEN  | Data prefetch enable. Enables or disables prefetching initiated by a data read access. This field is cleared by hardware reset. 00 No prefetching is triggered by a data read access 01 Prefetching may be triggered only by a data burst read access 10 Reserved 11 Prefetching may be triggered by any data read access                                                                                                                                                                                                                                                 |
+| 26-27  | IPFEN  | Instruction prefetch enable. Enables or disables prefetching initiated by an instruction read access. This field is cleared by hardware reset. 00 No prefetching is triggered by an instruction read access 01 Prefetching may be triggered only by an instruction burst read access 10 Reserved 11 Prefetching may be triggered by any instruction read access                                                                                                                                                                                                           |
+| 28-30  | PFLIM  | Prefetch limit. Controls the prefetch algorithm used by the FBIU prefetch controller. This field defines a limit on the maximum number of sequential prefetches which will be attempted between buffer misses. This field is cleared by hardware reset. 000 No prefetching is performed 001 A single additional line (next sequential) is prefetched on a buffer miss 010 Up to two additional lines may be prefetched following each buffer miss before                                                                                                                  |
+| 31     | BFEN   | FBIU line read buffers enable. Enables or disables line read buffer hits. It is also used to invalidate the buffers. These bits are cleared by hardware reset. 0 The line read buffers are disabled from satisfying read requests, and all buffer valid bits are cleared. 1 The line read buffers are enabled to satisfy read requests on hits. Buffer valid bits may be set when the buffers are successfully filled. Note: Disable prefetching before invalidating the buffers. This includes starting a program or erase operation, or turning on and off the buffers. |
+
+1 APC, WWSC, and RWSC values are determined by the maximum frequency of operation. See Table 13-15.
+
+## MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 13-15. FLASH\_BIU Settings vs. Frequency of Operation
+
+| Maximum Frequency (MHz)       | APC   | RWSC   | WWSC   | DPFEN                 | IPFEN                 | PFLIM          | BFEN       |
+|-------------------------------|-------|--------|--------|-----------------------|-----------------------|----------------|------------|
+| up to and including 82 MHz 1  | 0b001 | 0b001  | 0b01   | 0b00, 0b01, or 0b11 2 | 0b00, 0b01, or 0b11 2 | 0b000- 0b110 3 | 0b0, 0b1 4 |
+| up to and including 102 MHz 5 | 0b001 | 0b010  | 0b01   | 0b00, 0b01, or 0b11 2 | 0b00, 0b01, or 0b11 2 | 0b000- 0b110 3 | 0b0, 0b1 4 |
+| up to and including132 MHz 6  | 0b010 | 0b011  | 0b01   | 0b00, 0b01, or 0b11 2 | 0b00, 0b01, or 0b11 2 | 0b000- 0b110 3 | 0b0, 0b1 4 |
+| Default Setting after Reset   | 0b111 | 0b111  | 0b11   | 0b00                  | 0b00                  | 0b000          | 0b0        |
+
+- 1 This setting allows for 80 MHz system clock with 2% frequency modulation.
+- 2 For maximum flash performance, this should be set to 0b11.
+- 3 For maximum flash performance, this should be set to 0b110.
+- 4 For maximum flash performance, this should be set to 0b1.
+- 5 This setting allows for 100 MHz system clock with 2% frequency modulation.
+- 6 This setting allows for 128 MHz system clock with 2% frequency modulation.
+
+## 13.3.2.9 Flash Bus Interface Unit Access Protection Register (FLASH\_BIUAPR)
+
+The FLASH\_BIUAPR controls access protection for the Flash from masters on the crossbar switch. This register should only be written in a 32-bit write operation.
+
+Figure 13-13. Flash Bus Interface Unit Access Protection Register (FLASH\_BIUAPR)
+
+<!-- image -->
+
+## Table 13-16. FLASH\_BIUAPR Field Descriptions
+
+| Bits   | Name         | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|--------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-31   | M n AP [0:1] | Master n access protection. Controls whether read and write accesses to the Flash are allowed based on the master ID of a requesting master. These fields are initialized by hardware reset. Refer to Table 7-1. 00 No accesses may be performed by this master 01 Only read accesses may be performed by this master 10 Only write accesses may be performed by this master 11 Both read and write accesses may be performed by this master These fields are identified as follows: M0AP= e200z6 core M1AP= Nexus M2AP= eDMA M3AP= EBI M4AP = FEC (implemented in the MPC5553 only) |
+
+## 13.4 Functional Description
+
+## 13.4.1 Flash Bus Interface Unit (FBIU)
+
+The Flash BIU interfaces between the system bus and the Flash memory interface unit and generates read and  write  enables,  the  Flash  array  address,  write  size,  and  write  data  as  inputs  to  the  Flash  memory interface unit (MI). The Flash BIU captures read data from the MI and drives it on the system bus. Up to two lines (1 line is a 256-bit width) of data or instructions are buffered by the Flash BIU. Lines can be prefetched in advance of being requested by the system bus interface, allowing single-cycle read data responses on buffer hits.
+
+Several prefetch control algorithms are available for controlling line read buffer fills. Prefetch triggering can be restricted to instruction accesses only, data accesses only, or can be unrestricted. Prefetch triggering can also be controlled on a per-master basis.
+
+Access protections can be applied on a per-master basis for both reads and writes to support security and privilege mechanisms.
+
+## 13.4.1.1 FBIU Basic Interface Protocol
+
+The Flash BIU interfaces to the Flash array by driving addresses and read or write enable signals to the Flash memory interface unit. The access time of the Flash is determined by the settings of the wait state control bits in the FLASH\_BIUCR, as well as the pipelining of addresses.
+
+The Flash BIU also has the capability of extending the normal system bus access timing by inserting additional primary (initial access) wait states for reads and burst reads. This capability is provided to allow emulation of other memories which have different access time characteristics.
+
+## 13.4.1.2 FBIU Access Protections
+
+The Flash BIU provides hardware configurable access protections for both read and write cycles from masters. It allows restriction of read and write requests on a per-master basis. The FBIU also supports software configurable access protections. Detection of a protection violation results in an error response from the Flash BIU to the system bus.
+
+## 13.4.1.3 Flash Read Cycles-Buffer Miss
+
+Read data is normally stored in the least-recently updated line read buffer in parallel with the requested data being forwarded to the system bus.
+
+## 13.4.1.4 Flash Read Cycles-Buffer Hit
+
+Single clock read responses to the system bus are possible with the Flash BIU when the requested read access is buffered.
+
+## 13.4.1.5 Flash Access Pipelining
+
+Accesses to the Flash array can be pipelined by driving a subsequent access address and control signals while waiting for the current access to complete. Pipelined access requests are always run to completion and are not aborted by the Flash BIU. Request pipelining allows for improved performance by reducing the access latency seen by the system bus master. Access pipelining can be applied to both read and write cycles by the Flash array.
+
+## 13.4.1.6 Flash Error Response Operation
+
+The Flash array can terminate a requested access with an error. This can occur due to an uncorrectable ECC error,  an  access  control  violation,  or  because  of  improper  access  sequencing  during  program/erase operations. When an error response is received, the Flash BIU will mark a line read buffer as invalid. An error response can be signaled on read or write operations.
+
+## 13.4.1.7 FBIU Line Read Buffers and Prefetch Operation
+
+The Flash BIU contains a pair of 256-bit line read buffers which are used to hold data read from the Flash array. Each buffer operates independently and is filled using a single array access. The buffers are used for both prefetch and normal demand fetches.
+
+Prefetch triggering is controllable on a per-master and access-type basis. Bus masters can be enabled or disabled from triggering prefetches, and triggering can be further restricted based on whether a read access is for instruction or data and whether or not it is a burst access. A read access to the Flash BIU can trigger a prefetch to the next sequential line of array data on the cycle following the request. The access address is incremented to the next-higher 32-byte boundary, and A Flash array prefetch is initiated if the data is not already resident in a line read buffer. Prefetched data is loaded into the buffer which is not being used to satisfy the original request.
+
+Buffers can be in one of six states, listed here in prioritized order:
+
+- · Invalid-the buffer contains no valid data.
+- · Used-the buffer contains valid data which has been provided to satisfy a burst type read.
+- · Valid-the buffer contains valid data which has been provided to satisfy a single type read.
+- · Prefetched-the buffer contains valid data which has been prefetched to satisfy a potential future access.
+- · Busy-the buffer is currently being used to satisfy a burst read.
+- · Busy fill-the buffer has been allocated to receive data from the Flash array, and the array access is still in progress.
+
+Selection of a buffer to fill on a buffer miss is based on this prioritized order beginning with the first item (invalid). Selection of a buffer to fill on a triggered prefetch is based on the buffer which is not being used to satisfy the triggering access.
+
+The consequences of this replacement policy are that buffers are selected for filling on a 'least recently updated' basis when prefetching, and on a 'most recently emptied' basis for demand fetches (that is, a fetch which is actually satisfying a current system bus access). This policy allows for prefetched data to remain valid when non-prefetch enabled bus masters are granted Flash access.
+
+Several algorithms are available for prefetch control which trade off performance for power. They are described  in  Section 13.3.2.8,  'Flash  Bus  Interface  Unit  Control  Register  (FLASH\_BIUCR).'  More aggressive  prefetching  increases  power  due  to  the  number  of  wasted  (discarded)  prefetches,  but  can increase performance by lowering average read latency.
+
+## 13.4.1.8 FBIU Instruction/Data Prefetch Triggering
+
+Prefetch triggering can be enabled for instruction reads. Triggering can be enabled for all instruction reads or only for instruction burst reads. Prefetch triggering can be enabled for data reads. Triggering can be enabled for all data reads or only for data burst reads. Prefetches are not triggered by write cycles.
+
+## 13.4.1.9 FBIU Per-Master Prefetch Triggering
+
+Prefetch  triggering  can  be  controlled  for  individual  bus  masters.  System  bus  accesses  indicate  the requesting master.
+
+## 13.4.1.10 FBIU Buffer Invalidation
+
+The line read buffers can be invalidated under hardware and software control. Buffers are automatically invalidated whenever the buffers are turned on or off, or at the beginning of a program or erase operation.
+
+## NOTE
+
+Disable prefetching before invalidating the buffers. This includes starting a program or erase operation, or turning on and off the buffers.
+
+## 13.4.1.11 Flash Wait-state Emulation
+
+Emulation of other memory array timings are supported by the Flash BIU. This functionality can be useful to  maintain the access timing for blocks of memory which were used to overlay Flash blocks for the purpose of system calibration or tuning during code development.
+
+The  Flash  BIU  will  insert  additional  primary  wait  states  according  to  user-programmable  values  for primary wait states. When these inputs are non-zero, additional cycles are added to system bus transfers. Normal  system  bus  termination  will  be  extended.  In  addition,  no  line  read  buffer  prefetches  will  be initiated, and buffer hits will be ignored.
+
+## 13.4.2 Flash Memory Array: User Mode
+
+In  user  (normal)  operating  mode  the  Flash  module  can  be  read,  written  (register  writes  and  interlock writes), programmed, or erased. The following subsections define all actions that can be performed in normal operating mode. The registers mentioned in these sections are detailed in Section 13.3.2, 'Register Descriptions.'
+
+## 13.4.2.1 Flash Read and Write
+
+The default state of the Flash module is read. The main and shadow address space can be read only in the read state. The module configuration register (FLASH\_MCR) is always available for read. The Flash module enters the read state on reset. The Flash module is in the read state under four sets of conditions:
+
+- · The read state is active when FLASH\_MCR[STOP] = 0 (User mode read).
+- · The read state is active when FLASH\_MCR[PGM] = 1 and/or FLASH\_MCR[ERS] = 1 and high voltage operation is ongoing  (Read while write).
+
+## NOTE
+
+Reads done to the partitions being operated on (either erased or programmed) will result in an error and the FLASH\_MCR[RWE] bit will be set.
+
+- · The read state is active when FLASH\_MCR[PGM] = 1 and FLASH\_MCR[PSUS] = 1 in the MCR. (Program suspend).
+- · The read state is active when FLASH\_MCR[ERS] = 1 and FLASH\_MCR[ESUS] = 1 and FLASH\_MCR[PGM] = 0 in the MCR. (Erase suspend).
+
+## NOTE
+
+Flash core reads are done through the BIU. In many cases the BIU will do page buffering to allow sequential reads to be done with higher performance. This can create a data coherency issue that must be handled with  software.  Data  coherency  can  be  an  issue  after  a  program  or  erase operation, as well as shadow row operations.
+
+In Flash normal operating mode, registers can be written and the Flash array can be written to do interlock writes.
+
+Reads  attempted  to  invalid  locations  will  result  in  indeterminate  data.  Invalid  locations  occur  when addressing is done to blocks that do not exist in non 2 n array sizes.
+
+Interlock writes attempted to invalid locations (due to blocks that do not exist in non 2 n array sizes), will result in an interlock occurring, but attempts to program or erase these blocks will not occur since they are forced to be locked.
+
+See Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH\_LMLR), Section 13.3.2.3, 'High Address Space Block Locking Register (FLASH\_HLR)' and Section 13.3.2.4, 'Secondary Low/Mid Address Space Block Locking Register (FLASH\_SLMLR)' for more information.
+
+## 13.4.2.2 Read While Write (RWW)
+
+The Flash core is divided into partitions. Partitions are always comprised of two or more blocks. Partitions are used to determine read while write (RWW) groupings. While a write (program or erase) is being done within a given partition, a read can be simultaneously executed to any other partition. Partitions are listed in Table 13-4. Each partition in high address space comprises of two 128-Kbyte blocks. Note that the shadow block has unique RWW restrictions described in Section 13.4.2.5, 'Flash Shadow Block.'
+
+The Flash core is also divided into blocks to implement independent erase or program protection. The shadow block exists outside the normal address space and is programmed, erased and read independently of the other blocks. The shadow block is included to support systems that require NVM for security or system initialization information.
+
+A  software  mechanism  is  provided  to  independently  lock  or  unlock  each  block  in  high-,  mid-,  and low-address space against program and erase.
+
+## 13.4.2.3 Flash Programming
+
+Programming changes the value stored in an array bit from logic 1 to logic 0 only. Programming cannot change a stored logic 0 to a logic 1. Addresses in locked/disabled blocks cannot be programmed. The user can program the values in any or all of eight words within a page in a single program sequence. Word addresses are selected using bits 4:2 of the page-bound word.
+
+Whenever a program operation occurs, ECC bits are programmed. ECC is handled on a 64-bit boundary. Thus,  if  only  1  word  in  any  given  64-bit  ECC  segment  is  programmed,  the  adjoining  word  (in  that segment)  should  not  be  programmed  because  ECC  calculation  has  already  completed  for  that  64-bit segment.  Attempts  to  program  the  adjoining  word  will  probably  result  in  an  operation  failure.  It  is recommended that all programming operations be from 64 bits to 256 bits, and be 64-bit aligned. The programming operation should completely fill selected ECC segments within the page.
+
+The program operation consists of the following sequence of events:
+
+- 1. Change the value in the FLASH\_MCR[PGM] bit from a 0 to a 1.
+
+## NOTE
+
+Ensure the block that contains the address to be programmed is unlocked. See  Section 13.3.2.2,  'Low/Mid  Address  Space  Block  Locking  Register (FLASH\_LMLR), Section 13.3.2.3, 'High Address Space Block Locking Register (FLASH\_HLR)'  and  Section 13.3.2.4,  'Secondary  Low/Mid Address  Space  Block  Locking  Register  (FLASH\_SLMLR)'  for  more information.
+
+- 2. Write the first address to be programmed in the Flash module with the program data. This write is referred to as a program data interlock write. An interlock write may be either be an aligned word or double-word.
+- 3. If more than 1 word or double-word is to be programmed, write each additional address in the page with data to be programmed. This is referred to as a program data write. All unwritten data words default to 0xFFFF FFFF.
+- 4. Write a logic 1 to the FLASH\_MCR[EHV] bit to start the internal program sequence or skip to step 9 to terminate.
+- 5. Wait until the FLASH\_MCR[DONE] bit goes high.
+- 6. Confirm FLASH\_MCR[PEG]  = 1.
+- 7. Write a logic 0 to the FLASH\_MCR[EHV] bit.
+- 8. If more addresses are to be programmed, return to step 2.
+- 9. Write a logic 0 to the FLASH\_MCR[PGM] bit to terminate the program sequence.
+
+The program sequence is presented graphically in Figure 13-14. The program suspend operation detailed in Figure 13-14 is discussed in Section 13.4.2.3.2, 'Flash Program Suspend/Resume.'
+
+The first write after a program is initiated determines the page address to be programmed. Program may be initiated with the 0 to 1 transition of the FLASH\_MCR[PGM]  bit  or  by  clearing the FLASH\_MCR[EHV] bit at the end of a previous program. This first write is referred to as an interlock write. If the program is not an erase-suspended program, the interlock write determines if the shadow or normal array space will be programmed and causes FLASH\_MCR[PEAS] to be set/cleared.
+
+In the case of an erase-suspended program, the value in FLASH\_MCR[PEAS], is retained from the erase.
+
+An interlock write must be performed before setting FLASH\_MCR[EHV]. The user may terminate a program sequence by clearing FLASH\_MCR[PGM] prior to setting FLASH\_MCR[EHV].
+
+If multiple writes are done to the same location the data for the last write is used in programming.
+
+While FLASH\_MCR[DONE] is low, FLASH\_MCR[EHV] is high and FLASH\_MCR[PSUS] is low the user may clear FLASH\_MCR[EHV], resulting in a program abort. A program abort forces the module to step 8 of the program sequence. An aborted program will result in FLASH\_MCR[PEG] being set low, indicating a failed operation. The data space being operated on before the abort will contain indeterminate data. The user may not abort a program sequence while in program suspend.
+
+## WARNING
+
+Aborting  a  program  operation  will  leave  the  Flash  core  addresses  being programmed  in  an  indeterminate  data  state.  This  may  be  recovered  by executing an erase on the affected blocks.
+
+## Flash Memory
+
+Figure 13-14. Program Sequence
+
+<!-- image -->
+
+## 13.4.2.3.1 Software Locking
+
+A software mechanism is provided to independently lock/unlock each high, mid, and low address space against program and erase.
+
+Software Locking is done through the FLASH\_LMLR (low/mid address space block locking register), FLASH\_SLMLR  (secondary  low/mid  address  space  block  locking  register),  or  FLASH\_HLR  (high address space block locking register). These can be written through register writes, and can be read through register reads.
+
+When the program/erase operations are enabled through hardware, software locks are enforced through doing register writes.
+
+## 13.4.2.3.2 Flash Program Suspend/Resume
+
+The program sequence may be suspended to allow read access to the Flash core. It is not possible to erase or program during a program suspend.  Interlock writes should not be attempted during program suspend.
+
+A program suspend can be initiated by changing the value of the FLASH\_MCR[PSUS] bit from a 0 to a 1. FLASH\_MCR[PSUS] can be set high at any time when FLASH\_MCR[PGM] and FLASH\_MCR[EHV] are high. A 0 to 1 transition of FLASH\_MCR[PSUS] causes the Flash module to start the sequence to enter program suspend, which is a read state. The module is not suspended until FLASH\_MCR[DONE] = 1. At this time Flash core reads may be attempted. Once suspended, the Flash core may only be read. Reads to the blocks being programmed/erased return indeterminate data.
+
+The program sequence is resumed by writing a logic 0 to FLASH\_MCR[PSUS]. FLASH\_MCR[EHV] must be set to a 1 before clearing FLASH\_MCR[PSUS] to resume operation. When the operation resumes, the Flash module continues the program sequence from one of a set of predefined points. This may extend the time required for the program operation.
+
+## 13.4.2.4 Flash Erase
+
+Erase changes the value stored in all bits of the selected blocks to logic 1. Locked or disabled blocks cannot be  erased.  If  multiple  blocks  are  selected  for  erase  during  an  erase  sequence,  the  blocks  are  erased sequentially starting with the lowest numbered block and terminating with the highest. Aborting an erase operation  will  leave  the  Flash  core  blocks  being  erased  in  an  indeterminate  data  state.  This  can  be recovered by executing an erase on the affected blocks.
+
+The erase sequence consists of the following sequence of events:
+
+- 1. Change the value in the FLASH\_MCR[ERS] bit from 0 to a 1.
+- 2. Select the block, or blocks to be erased by writing ones to the appropriate registers in FLASH\_LMSR or FLASH\_HSR. If the shadow row is to be erased, this step may be skipped, and FLASH\_LMSR and FLASH\_HSR are ignored. For shadow row erase, see section Section 13.4.2.5, 'Flash Shadow Block' for more information.
+
+## NOTE
+
+Lock and Select are independent. If a block is selected and locked, no erase will occur. See Section 13.3.2.2, 'Low/Mid Address Space Block Locking Register (FLASH\_LMLR), Section 13.3.2.3, 'High Address Space Block Locking Register (FLASH\_HLR)'  and  Section 13.3.2.4, 'Secondary Low/Mid Address Space Block Locking Register (FLASH\_SLMLR)' for more information.
+
+## Flash Memory
+
+- 3. Write to any address in Flash. This is referred to as an erase interlock write.
+- 4. Write a logic 1 to the FLASH\_MCR[EHV] bit to start an internal erase sequence or skip to step 9 to terminate.
+- 5. Wait until the FLASH\_MCR[DONE] bit goes high.
+- 6. Confirm FLASH\_MCR[PEG] = 1.
+- 7. Write a logic 0 to the FLASH\_MCR[EHV] bit.
+- 8. If more blocks are to be erased, return to step 2.
+- 9. Write a logic 0 to the FLASH\_MCR[ERS] bit to terminate the erase.
+
+The erase sequence is presented graphically in Figure 13-15. The erase suspend operation detailed in Figure 13-15 is discussed in section Section 13.4.2.4.1, 'Flash Erase Suspend/Resume.'
+
+After settingFLASH\_MCR[ERS], one write, referred to as an interlock write, must be performed before FLASH\_MCR[EHV] can be set to a 1. Data words written during erase sequence interlock writes are ignored.  The  user  may  terminate  the  erase  sequence  by  clearing  FLASH\_MCR[ERS]  before  setting FLASH\_MCR[EHV].
+
+An erase operation may be aborted by clearing FLASH\_MCR[EHV] assuming FLASH\_MCR[DONE] is low, FLASH\_MCR[EHV] is high and FLASH\_MCR[ESUS] is low. An erase abort forces the module to step 8 of the erase sequence. An aborted erase will result in FLASH\_MCR[PEG] being set low, indicating a failed operation. The blocks being operated on before the abort contain indeterminate data. The user may not abort an erase sequence while in erase suspend.
+
+## WARNING
+
+Aborting an erase operation will leave the Flash core blocks being erased in an indeterminate data state. This may be recovered by executing an erase on the affected blocks.
+
+## 13.4.2.4.1 Flash Erase Suspend/Resume
+
+The erase sequence may be suspended to allow read access to the Flash core. The erase sequence may also be  suspended  to  program  (erase-suspended  program)  the  Flash  core.  A  program  started  during  erase suspend can in turn be suspended. Only one erase suspend and one program suspend are allowed at a time during an operation. It is not possible to erase during an erase suspend, or program during a program suspend. During suspend, all reads to Flash core locations targeted for program and blocks targeted for erase return indeterminate data. Programming locations in blocks targeted for erase during erase-suspended program may result in corrupted data.
+
+An erase suspend operation is initiated by setting the FLASH\_MCR[ESUS] bit. FLASH\_MCR[ESUS] can  be  set  to  a  1  at  any  time  when  FLASH\_MCR[ERS]  and  FLASH\_MCR[EHV]  are  high  and FLASH\_MCR[PGM] is low. A 0 to 1 transition of FLASH\_MCR[ESUS] causes the Flash module to start the sequence which places it in erase suspend. The user must wait until FLASH\_MCR[DONE] = 1 before the module is suspended and further actions are attempted. Once suspended, the array may be read or a program sequence may be initiated (erase-suspended program). Before initiating a program sequence the user  must  first  clear  FLASH\_MCR[EHV].  If  a  program  sequence  is  initiated  the  value  of  the FLASH\_MCR[PEAS] is not reset. These values are fixed at the time of the first interlock of the erase. Flash core reads while FLASH\_MCR[ESUS] = 1 from the blocks being erased return indeterminate data.
+
+The erase operation is resumed by clearing the FLASH\_MCR[ESUS] bit. The Flash continues the erase sequence from one of a set of predefined points. This can extend the time required for the erase operation.
+
+## WARNING
+
+In  an  erase-suspended  program,  programming  Flash  locations  in  blocks which were being operated on in the erase may corrupt Flash core data.
+
+## Flash Memory
+
+Figure 13-15. Erase Sequence
+
+<!-- image -->
+
+## 13.4.2.5 Flash Shadow Block
+
+The Flash shadow block is a memory-mapped block in the Flash memory map. Program and erase of the shadow  block  are  enabled  only  when  FLASH\_MCR[PEAS]  =  1.  Once  the  user  has  begun  an  erase operation on the shadow block, the operation cannot be suspended to program the main address space and vice-versa. The user must terminate the shadow erase operation to program or erase the main address space.
+
+## NOTE
+
+If an erase of user space is requested, and a suspend is done with attempts to  erase  suspend  program  shadow space, this attempted program will be directed  to  user  space  as  dictated  by  the  state  of  FLASH\_MCR[PEAS]. Likewise an attempted erase suspended program of user space, while the shadow space is being erased, will be directed to shadow space as dictated by the state of FLASH\_MCR[PEAS].
+
+The shadow block cannot utilize the RWW feature. Once an operation is started in the shadow block, a read cannot be done to the shadow block, or any other block Likewise, once an operation is started in a block in low/mid/high address space, a read cannot be done in the shadow block.
+
+The shadow block contains information on how the lock registers are reset. The first and second words can be used for reset configuration words. All other words can be used for user defined functions or other configuration words.
+
+The shadow block may be locked/unlocked against program or erase by using the FLASH\_LMLR or FLASH\_SLMLR discussed in Section 13.3.2, 'Register Descriptions.'
+
+Programming of the shadow row has similar restrictions to programming the array in terms of how ECC is  calculated.  See  Section 13.4.2.3,  'Flash  Programming'  for  more  information.  Only  one  program  is allowed per 64 bit ECC segment between erases. Erase of the shadow row is done similarly as an array erase. See section Section 13.4.2.4, 'Flash Erase' for more information.
+
+## 13.4.2.6 Censorship
+
+Censorship logic disables access to internal Flash based on the censorship control word value and the BOOTCFG[0:1]  bits  in  the  SIU\_RSR.  This  prevents  modification  of  the  FLASH\_BIUAPR  bitfields associated with all masters  except  the core based  on  the censorship  control word  value,  the BOOTCFG[0:1] bits in the SIU\_RSR, and the EXTM bit in the EBI\_MCR. Also, censorship logic sets the boot default value to external-with-external-master access disabled based on the value of the censorship control word and a TCU input signal.
+
+## 13.4.2.6.1 Censorship Control Word
+
+The censorship control word is a 32-bit value located at the base address of the shadow row plus 0x1E0. The Flash module latches the value of the control word prior to the negation of system reset. Censorship logic uses the value latched in the Flash module to disable access to internal Flash, disable the NDI, prevent modification of the FLASH\_BIUAPR bitfields, and/or set the boot default value .
+
+## 13.4.2.6.2 Flash Disable
+
+Censorship  logic  disables  read  and  write  access  to  internal  Flash  according  to  the  logic  presented  in Table 13-17.
+
+Table 13-17 shows the encoding of the BOOTCFG signals in conjunction with the value stored in the Censorship word in the shadow row of internal flash memory. The table also shows: the name of the boot mode; whether the internal flash memory is enabled or disabled; whether the Nexus port is enabled or disabled;  whether  the  password  downloaded  in  serial  boot  mode  is  compared  with  a  fixed  'public' password or compared to a user programmable Flash password.
+
+Table 13-17. Flash Access Disable Logic
+
+|   BOOTCFG 1 [0:1] | Censorship Control 0x00FF_FDE0 (Upper Half)   | Serial Boot Control 0x00FF_FDE2 (Lower Half)   | Boot Mode Name                             | Internal Flash State   | Nexus State 2   | Serial Password   |
+|-------------------|-----------------------------------------------|------------------------------------------------|--------------------------------------------|------------------------|-----------------|-------------------|
+|                00 | !0x55AA                                       | Don't care                                     | Internal - Censored                        | Enabled                | Disabled        | Flash             |
+|                00 | 0x55AA                                        | Don't care                                     | Internal - Public                          | Enabled                | Enabled         | Public            |
+|                01 | Don't care                                    | 0x55AA                                         | Serial - Flash Password                    | Enabled                | Disabled        | Flash             |
+|                01 | Don't care                                    | !0x55AA                                        | Serial - Public Password                   | Disabled               | Enabled         | Public            |
+|                10 | !0x55AA                                       | Don't care                                     | External - No Arbitration - Censored       | Disabled               | Enabled         | Public            |
+|                10 | 0x55AA                                        | Don't care                                     | External - No Arbitration - Public         | Enabled                | Enabled         | Public            |
+|                11 | !0x55AA                                       | Don't care                                     | External - External Arbitration - Censored | Disabled               | Enabled         | Public            |
+|                11 | 0x55AA                                        | Don't care                                     | External - External Arbitration - Public   | Enabled                | Enabled         | Public            |
+
+'!' = 'NOT' Meaning any value other than the value specified
+
+1 BOOTCFG[0:1] bits are located in the SIU\_RSR.
+
+2 The Nexus port controller is held in reset when in censored mode.
+
+The FBIU returns a bus error if an access is attempted while Flash access is disabled. Flash access is any read, write or execute access.
+
+## 13.4.2.6.3 FLASH\_BIUAPR Modification
+
+Censorship logic prevents modification of the access protection register (FLASH\_BIUAPR) bit fields associated with all masters except the core according to the logic presented in Table 13-18.
+
+Table 13-18. PFBAPR Modification Logic
+
+| BOOTCFG 1   | BOOTCFG 1   | Censorship Control Word   | Censorship Control Word   | EXTM 2   | PFBAPRBitfields Writable   |
+|-------------|-------------|---------------------------|---------------------------|----------|----------------------------|
+| [0]         | [1]         | Upper Half                | Lower Half                | EXTM 2   | PFBAPRBitfields Writable   |
+| 0           | 0           | 0x55AA                    | 0xXXXX                    | 0        | Yes                        |
+| 0           | 0           | !0x55AA                   | 0xXXXX                    | 0        | Yes                        |
+| 1           | 0           | 0x55AA                    | 0xXXXX                    | 0        | Yes                        |
+| 1           | 0           | !0x55AA                   | 0xXXXX                    | 0        | Yes                        |
+| 1           | 1           | 0x55AA                    | 0xXXXX                    | 0        | Yes                        |
+| 1           | 1           | !0x55AA                   | 0xXXXX                    | 0        | Yes                        |
+
+MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1
+
+Table 13-18. PFBAPR Modification Logic  (continued)
+
+| BOOTCFG 1   | BOOTCFG 1   | Censorship Control Word   | Censorship Control Word   | EXTM 2   | PFBAPRBitfields Writable   |
+|-------------|-------------|---------------------------|---------------------------|----------|----------------------------|
+| [0]         | [1]         | Upper Half                | Lower Half                | EXTM 2   | PFBAPRBitfields Writable   |
+| 0           | 1           | 0xXXXX                    | 0x55AA                    | 0        | Yes                        |
+| 0           | 1           | 0xXXXX                    | !0x55AA                   | 0        | Yes                        |
+| 0           | 0           | 0x55AA                    | 0xXXXX                    | 1        | Yes                        |
+| 0           | 0           | !0x55AA                   | 0xXXXX                    | 1        | No                         |
+| 1           | 0           | 0x55AA                    | 0xXXXX                    | 1        | Yes                        |
+| 1           | 0           | !0x55AA                   | 0xXXXX                    | 1        | No                         |
+| 1           | 1           | 0x55AA                    | 0xXXXX                    | 1        | Yes                        |
+| 1           | 1           | !0x55AA                   | 0xXXXX                    | 1        | No                         |
+| 0           | 1           | 0xXXXX                    | 0x55AA                    | 1        | No                         |
+| 0           | 1           | 0xXXXX                    | !0x55AA                   | 1        | No                         |
+
+1  BOOTCFG[0:1] bits are located in the SIU\_RSR.
+
+2  EXTM bit is located in the EBI\_MCR.
+
+## 13.4.2.6.4 External Boot Default
+
+The SIU latches the boot default value in the SIU\_RSR BOOTCFG[0:1] bits if and only if RSTCFG is negated. Censorship logic sets the boot default value before the SIU latches the value to external-with-external-master access disabled (EXTM=0) if the lower half of the censorship control word equals 0xFFFF or 0x0000. Otherwise, censorship logic sets the boot default value to internal Flash.
+
+## 13.4.3 Flash Memory Array: Stop Mode
+
+Stop mode is entered by setting the FLASH\_MCR[STOP] bit. The FLASH\_MCR[STOP] bit cannot be written when FLASH\_MCR[PGM] = 1 or FLASH\_MCR[ERS] = 1. In stop mode all DC current sources in the Flash module are disabled. Stop mode is exited by clearing the FLASH\_MCR[STOP] bit.
+
+Accessing the Flash memory array when STOP is asserted results in an error response from the Flash BIU to the system bus.  Memory array accesses must not be attempted until the Flash transitions out of stop mode.
+
+## 13.4.4 Flash Memory Array: Reset
+
+A reset is the highest priority operation for the Flash and terminates all other operations.
+
+The  Flash  uses  reset  to  initialize  register  and  status  bits  to  their  default  reset  values.  If  the  Flash  is executing a program or erase operation and a reset is issued, the operation will be aborted and the Flash will disable the high voltage logic without damage to the high voltage circuits. Reset aborts all operations and forces the Flash into normal operating mode ready to receive accesses. FLASH\_MCR[DONE] will be set to 1 at the exit of reset.
+
+## Flash Memory
+
+After reset is negated, register accesses can be performed, although it should be noted that registers that require updating from shadow information, or other inputs, cannot read updated values until Flash exits reset. FLASH\_MCR[DONE] may be polled to determine if reset has been exited.
+
+## 13.5 Revision History
+
+## Substantive Changes since Rev 3.0
+
+Added note about disabling prefetching before invalidating the buffers. Added to BFEN bit and a note to Section 13.4.1.10, 'FBIU Buffer Invalidation.'

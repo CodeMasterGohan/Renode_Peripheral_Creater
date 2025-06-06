@@ -1,0 +1,455 @@
+{
+  "peripheral_type": "Generic",
+  "template_version": "1.0",
+  "standard_todos": [
+    {
+      "category": "register_implementation",
+      "todos": [
+        {
+          "title": "Implement Control Registers",
+          "description": "Implement main control registers for peripheral configuration",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Identify all control registers from documentation",
+            "Implement enable/disable functionality",
+            "Handle configuration changes",
+            "Consider reset values"
+          ],
+          "acceptance_criteria": [
+            "All control registers are implemented",
+            "Configuration changes work correctly",
+            "Reset values are correct"
+          ]
+        },
+        {
+          "title": "Implement Status Registers",
+          "description": "Implement status registers for peripheral state",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Identify all status flags",
+            "Implement read-only fields correctly",
+            "Handle clear-on-read if applicable",
+            "Update status based on operations"
+          ],
+          "acceptance_criteria": [
+            "Status registers reflect correct state",
+            "Read-only fields cannot be written",
+            "Clear mechanisms work properly"
+          ]
+        },
+        {
+          "title": "Implement Data Registers",
+          "description": "Implement data input/output registers",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Identify data flow direction",
+            "Handle data buffering if needed",
+            "Trigger appropriate actions on access",
+            "Consider data width and alignment"
+          ],
+          "acceptance_criteria": [
+            "Data can be read/written correctly",
+            "Data flow works as specified",
+            "Proper triggering occurs"
+          ]
+        },
+        {
+          "title": "Implement Configuration Registers",
+          "description": "Implement mode and configuration registers",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Identify all configurable parameters",
+            "Validate configuration values",
+            "Handle invalid configurations",
+            "Apply configurations correctly"
+          ],
+          "acceptance_criteria": [
+            "All configurations can be set",
+            "Invalid values are rejected",
+            "Configurations take effect properly"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "state_management",
+      "todos": [
+        {
+          "title": "Implement Peripheral State Machine",
+          "description": "Implement main state machine for peripheral operation",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Identify all operational states",
+            "Define state transitions",
+            "Handle error states",
+            "Implement state persistence"
+          ],
+          "acceptance_criteria": [
+            "All states are reachable",
+            "Transitions work correctly",
+            "Error states are handled"
+          ]
+        },
+        {
+          "title": "Implement Internal State Tracking",
+          "description": "Track internal peripheral state and data",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Identify state variables",
+            "Implement proper initialization",
+            "Handle state updates",
+            "Consider state persistence"
+          ],
+          "acceptance_criteria": [
+            "State is tracked accurately",
+            "State updates work correctly",
+            "Reset clears state properly"
+          ]
+        },
+        {
+          "title": "Implement Reset Functionality",
+          "description": "Implement proper reset behavior",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Reset all registers to defaults",
+            "Clear internal state",
+            "Stop ongoing operations",
+            "Handle different reset types"
+          ],
+          "acceptance_criteria": [
+            "Reset restores defaults",
+            "Operations stop on reset",
+            "State is cleared properly"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "external_interfaces",
+      "todos": [
+        {
+          "title": "Implement External Pin Connections",
+          "description": "Create necessary external pin interfaces",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Identify all external pins",
+            "Use appropriate Renode interfaces",
+            "Handle bidirectional pins",
+            "Implement proper signal propagation"
+          ],
+          "acceptance_criteria": [
+            "All pins are accessible",
+            "Signal propagation works",
+            "Pin directions are correct"
+          ]
+        },
+        {
+          "title": "Implement Clock Input Handling",
+          "description": "Handle peripheral clock inputs",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Connect to clock source",
+            "Handle clock frequency changes",
+            "Implement clock gating if applicable",
+            "Synchronize operations with clock"
+          ],
+          "acceptance_criteria": [
+            "Clock connection works",
+            "Frequency changes handled",
+            "Operations are synchronized"
+          ]
+        },
+        {
+          "title": "Implement Bus Interface",
+          "description": "Implement proper bus interface for register access",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Handle different access sizes",
+            "Implement address decoding",
+            "Handle invalid accesses",
+            "Consider endianness"
+          ],
+          "acceptance_criteria": [
+            "Register access works correctly",
+            "Invalid accesses handled",
+            "All access sizes supported"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "interrupt_handling",
+      "todos": [
+        {
+          "title": "Implement Interrupt Generation",
+          "description": "Implement interrupt generation logic",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Identify interrupt sources",
+            "Implement trigger conditions",
+            "Handle interrupt masking",
+            "Set appropriate flags"
+          ],
+          "acceptance_criteria": [
+            "Interrupts trigger correctly",
+            "Masking works properly",
+            "Flags are set appropriately"
+          ]
+        },
+        {
+          "title": "Implement Interrupt Enable/Disable",
+          "description": "Implement interrupt control mechanisms",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Per-source enable bits",
+            "Global interrupt enable",
+            "Proper masking logic",
+            "Status preservation"
+          ],
+          "acceptance_criteria": [
+            "Interrupts can be controlled",
+            "Masking works correctly",
+            "Status is preserved"
+          ]
+        },
+        {
+          "title": "Implement Interrupt Status Handling",
+          "description": "Handle interrupt status and clearing",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Status register implementation",
+            "Clear mechanisms",
+            "Edge vs level triggering",
+            "Multiple pending interrupts"
+          ],
+          "acceptance_criteria": [
+            "Status reflects interrupts",
+            "Clearing works properly",
+            "Multiple interrupts handled"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "timing_and_clocks",
+      "todos": [
+        {
+          "title": "Implement Timing Requirements",
+          "description": "Implement peripheral timing requirements",
+          "priority": "medium",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Identify timing constraints",
+            "Use Renode timing framework",
+            "Handle delays properly",
+            "Synchronize with machine time"
+          ],
+          "acceptance_criteria": [
+            "Timing is accurate",
+            "Delays work correctly",
+            "Synchronization maintained"
+          ]
+        },
+        {
+          "title": "Implement Clock Domain Handling",
+          "description": "Handle multiple clock domains if applicable",
+          "priority": "medium",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Identify clock domains",
+            "Handle domain crossings",
+            "Synchronize properly",
+            "Avoid metastability"
+          ],
+          "acceptance_criteria": [
+            "Clock domains work correctly",
+            "No synchronization issues",
+            "Data integrity maintained"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "error_handling",
+      "todos": [
+        {
+          "title": "Implement Error Detection",
+          "description": "Implement error detection mechanisms",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Identify error conditions",
+            "Implement detection logic",
+            "Set error flags",
+            "Generate error interrupts"
+          ],
+          "acceptance_criteria": [
+            "Errors are detected",
+            "Flags are set correctly",
+            "Interrupts generated"
+          ]
+        },
+        {
+          "title": "Implement Error Recovery",
+          "description": "Implement error recovery mechanisms",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Define recovery procedures",
+            "Clear error conditions",
+            "Restore normal operation",
+            "Log error information"
+          ],
+          "acceptance_criteria": [
+            "Recovery procedures work",
+            "Normal operation restored",
+            "Errors are logged"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "testing",
+      "todos": [
+        {
+          "title": "Create Basic Functionality Tests",
+          "description": "Test core peripheral functionality",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Test all registers",
+            "Verify basic operations",
+            "Check reset behavior",
+            "Test configurations"
+          ],
+          "acceptance_criteria": [
+            "All features tested",
+            "Tests pass reliably",
+            "Good coverage achieved"
+          ]
+        },
+        {
+          "title": "Create Interrupt Tests",
+          "description": "Test interrupt generation and handling",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Test all interrupt sources",
+            "Verify masking",
+            "Test clearing mechanisms",
+            "Check timing"
+          ],
+          "acceptance_criteria": [
+            "All interrupts tested",
+            "Masking works correctly",
+            "No spurious interrupts"
+          ]
+        },
+        {
+          "title": "Create Stress Tests",
+          "description": "Test peripheral under stress conditions",
+          "priority": "medium",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "High-frequency operations",
+            "Concurrent access",
+            "Error injection",
+            "Performance measurement"
+          ],
+          "acceptance_criteria": [
+            "Peripheral remains stable",
+            "No data corruption",
+            "Performance acceptable"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "documentation",
+      "todos": [
+        {
+          "title": "Document Register Map",
+          "description": "Create comprehensive register documentation",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Document all registers",
+            "Include bit fields",
+            "Explain functionality",
+            "Provide examples"
+          ],
+          "acceptance_criteria": [
+            "All registers documented",
+            "Clear explanations",
+            "Examples provided"
+          ]
+        },
+        {
+          "title": "Document Usage Examples",
+          "description": "Create usage examples and tutorials",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Basic usage examples",
+            "Common configurations",
+            "Integration examples",
+            "Troubleshooting guide"
+          ],
+          "acceptance_criteria": [
+            "Examples are clear",
+            "Cover common use cases",
+            "Work correctly"
+          ]
+        }
+      ]
+    }
+  ],
+  "optional_features": [
+    {
+      "feature": "Power Management",
+      "todos": [
+        {
+          "title": "Implement Power States",
+          "description": "Support for low-power modes",
+          "priority": "low",
+          "effort_estimate": "large"
+        }
+      ]
+    },
+    {
+      "feature": "Debug Support",
+      "todos": [
+        {
+          "title": "Implement Debug Registers",
+          "description": "Add debug and diagnostic registers",
+          "priority": "low",
+          "effort_estimate": "medium"
+        }
+      ]
+    },
+    {
+      "feature": "Performance Monitoring",
+      "todos": [
+        {
+          "title": "Implement Performance Counters",
+          "description": "Add performance monitoring capabilities",
+          "priority": "low",
+          "effort_estimate": "medium"
+        }
+      ]
+    }
+  ]
+}

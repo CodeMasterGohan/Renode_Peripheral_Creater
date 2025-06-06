@@ -1,0 +1,298 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Step 5: TODO List Schema",
+  "description": "Schema for validating TODO items for Renode peripheral implementation",
+  "type": "object",
+  "properties": {
+    "peripheral_name": {
+      "type": "string",
+      "description": "Name of the peripheral"
+    },
+    "peripheral_type": {
+      "type": "string",
+      "description": "Type of peripheral"
+    },
+    "generation_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this TODO list was generated"
+    },
+    "implementation_summary": {
+      "type": "object",
+      "properties": {
+        "total_todos": {
+          "type": "integer",
+          "description": "Total number of TODO items"
+        },
+        "critical_todos": {
+          "type": "integer",
+          "description": "Number of critical priority TODOs"
+        },
+        "high_priority_todos": {
+          "type": "integer",
+          "description": "Number of high priority TODOs"
+        },
+        "estimated_effort_hours": {
+          "type": "number",
+          "description": "Estimated total effort in hours"
+        },
+        "complexity_score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Overall implementation complexity (1-10)"
+        }
+      },
+      "required": ["total_todos", "critical_todos", "high_priority_todos"]
+    },
+    "todo_categories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "enum": ["register_implementation", "interrupt_handling", "state_management", 
+                     "external_interfaces", "timing_and_clocks", "dma_support", 
+                     "error_handling", "testing", "documentation", "optimization"],
+            "description": "Category of TODO items"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of this category"
+          },
+          "todos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^TODO-[A-Z0-9]+-[0-9]+$",
+                  "description": "Unique TODO identifier"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "Short title of the TODO"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Detailed description of what needs to be done"
+                },
+                "priority": {
+                  "type": "string",
+                  "enum": ["critical", "high", "medium", "low"],
+                  "description": "Priority level"
+                },
+                "effort_estimate": {
+                  "type": "string",
+                  "enum": ["trivial", "small", "medium", "large", "extra-large"],
+                  "description": "Effort estimate"
+                },
+                "dependencies": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "IDs of other TODOs this depends on"
+                },
+                "affected_components": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Components affected by this TODO"
+                },
+                "implementation_hints": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Hints for implementing this TODO"
+                },
+                "acceptance_criteria": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Criteria for considering this TODO complete"
+                },
+                "code_location": {
+                  "type": "object",
+                  "properties": {
+                    "file": {
+                      "type": "string",
+                      "description": "File where this TODO should be implemented"
+                    },
+                    "class": {
+                      "type": "string",
+                      "description": "Class name"
+                    },
+                    "method": {
+                      "type": "string",
+                      "description": "Method name if applicable"
+                    },
+                    "line_hint": {
+                      "type": "string",
+                      "description": "Hint about where in the file"
+                    }
+                  }
+                },
+                "references": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": ["documentation", "example", "specification", "similar_implementation"],
+                        "description": "Type of reference"
+                      },
+                      "location": {
+                        "type": "string",
+                        "description": "Location of the reference"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Description of the reference"
+                      }
+                    },
+                    "required": ["type", "location"]
+                  }
+                }
+              },
+              "required": ["id", "title", "description", "priority", "effort_estimate"]
+            }
+          }
+        },
+        "required": ["category", "todos"]
+      }
+    },
+    "implementation_phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase_number": {
+            "type": "integer",
+            "description": "Phase number (1-based)"
+          },
+          "phase_name": {
+            "type": "string",
+            "description": "Name of the implementation phase"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of what this phase accomplishes"
+          },
+          "todo_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "TODO IDs to complete in this phase"
+          },
+          "deliverables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Expected deliverables from this phase"
+          },
+          "testing_requirements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Testing requirements for this phase"
+          }
+        },
+        "required": ["phase_number", "phase_name", "todo_ids"]
+      }
+    },
+    "risk_assessment": {
+      "type": "object",
+      "properties": {
+        "technical_risks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "risk": {
+                "type": "string",
+                "description": "Description of the risk"
+              },
+              "impact": {
+                "type": "string",
+                "enum": ["low", "medium", "high"],
+                "description": "Impact level"
+              },
+              "mitigation": {
+                "type": "string",
+                "description": "Mitigation strategy"
+              }
+            },
+            "required": ["risk", "impact", "mitigation"]
+          }
+        },
+        "implementation_challenges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Expected implementation challenges"
+        }
+      }
+    },
+    "validation_requirements": {
+      "type": "object",
+      "properties": {
+        "unit_tests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "test_name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "todo_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "TODOs that must be complete before this test"
+              }
+            },
+            "required": ["test_name", "description"]
+          }
+        },
+        "integration_tests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "test_name": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "components": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Components involved in this test"
+              }
+            },
+            "required": ["test_name", "description"]
+          }
+        }
+      }
+    }
+  },
+  "required": ["peripheral_name", "peripheral_type", "implementation_summary", "todo_categories"]
+}

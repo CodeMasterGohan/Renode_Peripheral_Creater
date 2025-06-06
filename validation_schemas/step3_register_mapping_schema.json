@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Step 3: Register Mapping Schema",
+  "description": "Schema for validating register mappings for Renode implementation",
+  "type": "object",
+  "properties": {
+    "peripheral_name": {
+      "type": "string",
+      "description": "Name of the peripheral"
+    },
+    "peripheral_type": {
+      "type": "string",
+      "description": "Type of peripheral"
+    },
+    "register_groups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "group_name": {
+            "type": "string",
+            "description": "Logical grouping name for related registers"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the register group's purpose"
+          },
+          "base_offset": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Base offset for this group if applicable"
+          },
+          "registers": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Register name"
+                },
+                "csharp_name": {
+                  "type": "string",
+                  "pattern": "^[A-Z][a-zA-Z0-9]*$",
+                  "description": "C# property name for the register"
+                },
+                "offset": {
+                  "type": "string",
+                  "pattern": "^0x[0-9A-Fa-f]+$",
+                  "description": "Register offset"
+                },
+                "size": {
+                  "type": "integer",
+                  "enum": [8, 16, 32, 64],
+                  "description": "Register size in bits"
+                },
+                "access": {
+                  "type": "string",
+                  "description": "Access type"
+                },
+                "reset_value": {
+                  "type": "string",
+                  "pattern": "^0x[0-9A-Fa-f]+$",
+                  "description": "Reset value"
+                },
+                "renode_type": {
+                  "type": "string",
+                  "enum": ["DoubleWordRegister", "WordRegister", "ByteRegister", "QuadWordRegister"],
+                  "description": "Renode register type to use"
+                },
+                "implementation_notes": {
+                  "type": "string",
+                  "description": "Notes for implementing this register"
+                },
+                "field_mappings": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "field_name": {
+                        "type": "string",
+                        "description": "Original field name from documentation"
+                      },
+                      "csharp_field_name": {
+                        "type": "string",
+                        "pattern": "^[A-Z][a-zA-Z0-9]*$",
+                        "description": "C# field name"
+                      },
+                      "bits": {
+                        "type": "string",
+                        "description": "Bit position(s)"
+                      },
+                      "renode_field_type": {
+                        "type": "string",
+                        "enum": ["IFlagRegisterField", "IValueRegisterField", "IEnumRegisterField"],
+                        "description": "Renode field type"
+                      },
+                      "access_type": {
+                        "type": "string",
+                        "enum": ["Read", "Write", "ReadWrite", "WriteOneToClear", "WriteOneToSet"],
+                        "description": "Field access type in Renode"
+                      },
+                      "callback_required": {
+                        "type": "boolean",
+                        "description": "Whether this field needs a callback"
+                      },
+                      "callback_type": {
+                        "type": "string",
+                        "enum": ["FieldValueChangedCallback", "FieldValueReadCallback", "FieldValueWriteCallback"],
+                        "description": "Type of callback if required"
+                      },
+                      "enum_values": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "integer"
+                        },
+                        "description": "Enum values if this is an enum field"
+                      }
+                    },
+                    "required": ["field_name", "csharp_field_name", "bits", "renode_field_type"]
+                  }
+                }
+              },
+              "required": ["name", "csharp_name", "offset", "size", "renode_type"]
+            }
+          }
+        },
+        "required": ["group_name", "registers"]
+      }
+    },
+    "memory_regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Memory region name"
+          },
+          "start_address": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Start address"
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^0x[0-9A-Fa-f]+$",
+            "description": "Size of memory region"
+          },
+          "purpose": {
+            "type": "string",
+            "description": "Purpose of this memory region"
+          }
+        },
+        "required": ["name", "start_address", "size"]
+      }
+    },
+    "interrupt_mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "interrupt_name": {
+            "type": "string",
+            "description": "Interrupt name from documentation"
+          },
+          "csharp_property_name": {
+            "type": "string",
+            "pattern": "^[A-Z][a-zA-Z0-9]*IRQ$",
+            "description": "C# property name for the interrupt"
+          },
+          "irq_number": {
+            "type": "integer",
+            "description": "IRQ number if fixed"
+          },
+          "trigger_conditions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Conditions that trigger this interrupt"
+          }
+        },
+        "required": ["interrupt_name", "csharp_property_name"]
+      }
+    },
+    "implementation_strategy": {
+      "type": "object",
+      "properties": {
+        "register_access_pattern": {
+          "type": "string",
+          "enum": ["direct", "banked", "indexed", "windowed"],
+          "description": "How registers are accessed"
+        },
+        "endianness": {
+          "type": "string",
+          "enum": ["little", "big", "configurable"],
+          "description": "Endianness of the peripheral"
+        },
+        "special_considerations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Special implementation considerations"
+        }
+      }
+    }
+  },
+  "required": ["peripheral_name", "peripheral_type", "register_groups"]
+}

@@ -1,0 +1,789 @@
+"""
+Milvus Vector Database Interface and Smart Document Retrieval
+
+This module handles all interactions with the Milvus vector database for
+Retrieval-Augmented Generation (RAG). It provides intelligent document
+retrieval capabilities, semantic search, and context management for
+peripheral documentation and Renode examples.
+
+Key features:
+- Vector similarity search for relevant documentation sections
+- Smart document selection with metadata filtering
+- Complete document retrieval with all chunks
+- Context validation for completeness
+- Proper chunk ordering by section type
+- Comprehensive error handling
+
+Author: Renode Model Generator Team
+Version: 2.0.0
+"""
+
+import json
+import logging
+import yaml
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Any, Optional, Tuple, Set
+from collections import defaultdict
+from enum import Enum
+
+import numpy as np
+from pymilvus import (
+    connections,
+    Collection,
+    CollectionSchema,
+    FieldSchema,
+    DataType,
+    utility,
+    MilvusException
+)
+from sentence_transformers import SentenceTransformer
+
+
+class SectionType(Enum):
+    """Enumeration of document section types in priority order."""
+    MEMORY_MAP = "memory_map"
+    REGISTERS = "registers"
+    FUNCTIONAL_DESCRIPTION = "functional_description"
+    INTERRUPTS = "interrupts"
+    TIMING = "timing"
+    EXAMPLES = "examples"
+    OTHER = "other"
+
+
+class MilvusConnectionError(Exception):
+    """Raised when connection to Milvus fails."""
+    pass
+
+
+class DocumentRetrievalError(Exception):
+    """Raised when document retrieval fails."""
+    pass
+
+
+class ContextValidationError(Exception):
+    """Raised when retrieved context fails validation."""
+    pass
+
+
+class MilvusRAGHandler:
+    """Handles vector database operations for RAG-based document retrieval."""
+    
+    def __init__(self, config_path: Optional[str] = None):
+        """
+        Initialize Milvus connection and collections.
+        
+        Args:
+            config_path: Path to configuration file. If None, uses default config.yaml
+            
+        Raises:
+            MilvusConnectionError: If connection to Milvus fails
+        """
+        self.logger = logging.getLogger(__name__)
+        
+        # Load configuration
+        if config_path:
+            with open(config_path, 'r') as f:
+                full_config = yaml.safe_load(f)
+        else:
+            with open('config.yaml', 'r') as f:
+                full_config = yaml.safe_load(f)
+        
+        self.config = full_config.get('milvus', {})
+        self.knowledge_config = full_config.get('knowledge_base', {})
+        
+        # Initialize embedding model
+        try:
+            self.embedding_model = SentenceTransformer(self.config["embedding_model"])
+            self.logger.info(f"Loaded embedding model: {self.config['embedding_model']}")
+        except Exception as e:
+            self.logger.error(f"Failed to load embedding model: {e}")
+            raise MilvusConnectionError(f"Failed to load embedding model: {e}")
+        
+        # Connect to Milvus
+        self._connect()
+        
+        # Initialize collections
+        self.doc_collection = self._init_collection("peripheral_docs")
+        self.example_collection = self._init_collection("renode_examples")
+        
+        # Section type priorities for ordering
+        self.section_priorities = {
+            SectionType.MEMORY_MAP: 1,
+            SectionType.REGISTERS: 2,
+            SectionType.FUNCTIONAL_DESCRIPTION: 3,
+            SectionType.INTERRUPTS: 4,
+            SectionType.TIMING: 5,
+            SectionType.EXAMPLES: 6,
+            SectionType.OTHER: 7
+        }
+    
+    def _connect(self) -> None:
+        """
+        Establish connection to Milvus server.
+        
+        Raises:
+            MilvusConnectionError: If connection fails
+        """
+        try:
+            connections.connect(
+                alias="default",
+                host=self.config["host"],
+                port=self.config["port"],
+                timeout=30
+            )
+            self.logger.info(f"Connected to Milvus at {self.config['host']}:{self.config['port']}")
+        except Exception as e:
+            self.logger.error(f"Failed to connect to Milvus: {e}")
+            raise MilvusConnectionError(f"Failed to connect to Milvus: {e}")
+    
+    def _init_collection(self, collection_name: str) -> Collection:
+        """
+        Initialize or load a Milvus collection.
+        
+        Args:
+            collection_name: Name of the collection
+            
+        Returns:
+            Collection instance
+            
+        Raises:
+            MilvusConnectionError: If collection initialization fails
+        """
+        try:
+            if utility.has_collection(collection_name):
+                collection = Collection(collection_name)
+                collection.load()
+                self.logger.info(f"Loaded existing collection: {collection_name}")
+            else:
+                collection = self._create_collection(collection_name)
+                self.logger.info(f"Created new collection: {collection_name}")
+            
+            return collection
+        except Exception as e:
+            self.logger.error(f"Failed to initialize collection {collection_name}: {e}")
+            raise MilvusConnectionError(f"Failed to initialize collection: {e}")
+    
+    def _create_collection(self, collection_name: str) -> Collection:
+        """
+        Create a new Milvus collection with appropriate schema.
+        
+        Args:
+            collection_name: Name of the collection to create
+            
+        Returns:
+            Created collection instance
+        """
+        fields = [
+            FieldSchema(name="id", dtype=DataType.INT64, is_primary=True, auto_id=True),
+            FieldSchema(name="content", dtype=DataType.VARCHAR, max_length=65535),
+            FieldSchema(name="embedding", dtype=DataType.FLOAT_VECTOR, dim=self.config["embedding_dim"]),
+            FieldSchema(name="metadata", dtype=DataType.JSON),
+            FieldSchema(name="timestamp", dtype=DataType.INT64)
+        ]
+        
+        schema = CollectionSchema(
+            fields=fields,
+            description=f"Collection for {collection_name}"
+        )
+        
+        collection = Collection(
+            name=collection_name,
+            schema=schema
+        )
+        
+        # Create index for vector field
+        index_params = self.config.get("index_params", {
+            "metric_type": "L2",
+            "index_type": "IVF_FLAT",
+            "params": {"nlist": 128}
+        })
+        
+        collection.create_index(
+            field_name="embedding",
+            index_params=index_params
+        )
+        
+        collection.load()
+        
+        return collection
+    
+    def perform_similarity_search(
+        self,
+        query: str,
+        peripheral_name: Optional[str] = None,
+        section_type: Optional[str] = None,
+        top_k: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Perform vector similarity search with metadata filtering.
+        
+        Args:
+            query: Search query text
+            peripheral_name: Optional peripheral name filter
+            section_type: Optional section type filter
+            top_k: Number of results to return
+            
+        Returns:
+            List of documents with similarity scores
+            
+        Raises:
+            DocumentRetrievalError: If search fails
+        """
+        try:
+            # Build metadata filters
+            filters = {}
+            if peripheral_name:
+                filters["peripheral_name"] = peripheral_name
+            if section_type:
+                filters["section_type"] = section_type
+            
+            # Perform search
+            results = self.search_documents(
+                query=query,
+                top_k=top_k,
+                filters=filters,
+                collection_name="peripheral_docs"
+            )
+            
+            self.logger.info(f"Found {len(results)} documents for query: {query}")
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"Similarity search failed: {e}")
+            raise DocumentRetrievalError(f"Similarity search failed: {e}")
+    
+    def retrieve_all_chunks(
+        self,
+        document_ids: List[str],
+        peripheral_name: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve all chunks from identified documents.
+        
+        Args:
+            document_ids: List of document IDs to retrieve
+            peripheral_name: Peripheral name to filter by
+            
+        Returns:
+            List of all chunks from the documents
+            
+        Raises:
+            DocumentRetrievalError: If retrieval fails
+        """
+        try:
+            # Build filter expression for peripheral name
+            expr = f'metadata["peripheral_name"] == "{peripheral_name}"'
+            
+            # Query all chunks for the peripheral
+            results = self.doc_collection.query(
+                expr=expr,
+                output_fields=["id", "content", "metadata"],
+                limit=1000  # Adjust based on expected document size
+            )
+            
+            # Convert to standard format
+            chunks = []
+            for result in results:
+                chunks.append({
+                    "id": result.get("id"),
+                    "content": result.get("content"),
+                    "metadata": result.get("metadata", {})
+                })
+            
+            self.logger.info(f"Retrieved {len(chunks)} chunks for peripheral: {peripheral_name}")
+            return chunks
+            
+        except Exception as e:
+            self.logger.error(f"Failed to retrieve chunks: {e}")
+            raise DocumentRetrievalError(f"Failed to retrieve chunks: {e}")
+    
+    def assemble_comprehensive_context(
+        self,
+        chunks: List[Dict[str, Any]],
+        max_tokens: int = 8000
+    ) -> Tuple[str, Dict[str, List[Dict[str, Any]]]]:
+        """
+        Assemble chunks into comprehensive context with proper ordering.
+        
+        Args:
+            chunks: List of document chunks
+            max_tokens: Maximum context size in tokens
+            
+        Returns:
+            Tuple of (assembled context string, chunks organized by section)
+        """
+        # Organize chunks by section type
+        sections = defaultdict(list)
+        for chunk in chunks:
+            section_type = chunk.get("metadata", {}).get("section_type", "other")
+            sections[section_type].append(chunk)
+        
+        # Sort chunks within each section by position if available
+        for section_type, section_chunks in sections.items():
+            sections[section_type] = sorted(
+                section_chunks,
+                key=lambda x: x.get("metadata", {}).get("position", 0)
+            )
+        
+        # Assemble context in priority order
+        context_parts = []
+        current_tokens = 0
+        
+        # Define section order
+        section_order = [
+            SectionType.MEMORY_MAP.value,
+            SectionType.REGISTERS.value,
+            SectionType.FUNCTIONAL_DESCRIPTION.value,
+            SectionType.INTERRUPTS.value,
+            SectionType.TIMING.value,
+            SectionType.EXAMPLES.value,
+            SectionType.OTHER.value
+        ]
+        
+        for section_type in section_order:
+            if section_type in sections:
+                context_parts.append(f"\n=== {section_type.upper()} ===\n")
+                
+                for chunk in sections[section_type]:
+                    # Estimate tokens (rough approximation)
+                    chunk_tokens = len(chunk["content"]) // 4
+                    
+                    if current_tokens + chunk_tokens <= max_tokens:
+                        context_parts.append(chunk["content"])
+                        context_parts.append("\n")
+                        current_tokens += chunk_tokens
+                    else:
+                        self.logger.warning(f"Reached token limit, truncating context at {current_tokens} tokens")
+                        break
+        
+        assembled_context = "\n".join(context_parts)
+        return assembled_context, dict(sections)
+    
+    def validate_context(
+        self,
+        context: str,
+        sections: Dict[str, List[Dict[str, Any]]]
+    ) -> Tuple[bool, List[str]]:
+        """
+        Validate retrieved context for completeness.
+        
+        Args:
+            context: Assembled context string
+            sections: Chunks organized by section type
+            
+        Returns:
+            Tuple of (is_valid, list of missing sections)
+        """
+        # Define essential sections
+        essential_sections = [
+            SectionType.MEMORY_MAP.value,
+            SectionType.REGISTERS.value,
+            SectionType.FUNCTIONAL_DESCRIPTION.value
+        ]
+        
+        # Check for missing essential sections
+        missing_sections = []
+        for section in essential_sections:
+            if section not in sections or not sections[section]:
+                missing_sections.append(section)
+        
+        # Additional validation checks
+        if context.strip() == "":
+            missing_sections.append("empty_context")
+        
+        # Check minimum content length
+        if len(context) < 500:  # Arbitrary minimum
+            missing_sections.append("insufficient_content")
+        
+        is_valid = len(missing_sections) == 0
+        
+        if not is_valid:
+            self.logger.warning(f"Context validation failed. Missing: {missing_sections}")
+        else:
+            self.logger.info("Context validation passed")
+        
+        return is_valid, missing_sections
+    
+    def get_smart_context(
+        self,
+        query: str,
+        peripheral_name: str,
+        max_tokens: int = 8000,
+        validate: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Main method for smart document retrieval with all requested features.
+        
+        Args:
+            query: User query for similarity search
+            peripheral_name: Name of the peripheral
+            max_tokens: Maximum context size
+            validate: Whether to validate the context
+            
+        Returns:
+            Dictionary containing:
+                - context: Assembled context string
+                - sections: Organized chunks by section
+                - is_valid: Validation result
+                - missing_sections: List of missing sections
+                - metadata: Additional metadata
+                
+        Raises:
+            DocumentRetrievalError: If retrieval fails
+            ContextValidationError: If validation fails and validate=True
+        """
+        try:
+            # Step 1: Perform similarity search
+            self.logger.info(f"Starting smart context retrieval for peripheral: {peripheral_name}")
+            search_results = self.perform_similarity_search(
+                query=query,
+                peripheral_name=peripheral_name,
+                top_k=5  # Get top documents
+            )
+            
+            if not search_results:
+                # Fallback: Try without peripheral filter
+                self.logger.warning("No results with peripheral filter, trying without")
+                search_results = self.perform_similarity_search(
+                    query=query,
+                    top_k=10
+                )
+            
+            if not search_results:
+                raise DocumentRetrievalError("No documents found for query")
+            
+            # Step 2: Extract unique document IDs
+            doc_ids = list(set(doc["id"] for doc in search_results))
+            
+            # Step 3: Retrieve all chunks for the peripheral
+            all_chunks = self.retrieve_all_chunks(doc_ids, peripheral_name)
+            
+            if not all_chunks:
+                raise DocumentRetrievalError(f"No chunks found for peripheral: {peripheral_name}")
+            
+            # Step 4: Assemble comprehensive context
+            context, sections = self.assemble_comprehensive_context(
+                chunks=all_chunks,
+                max_tokens=max_tokens
+            )
+            
+            # Step 5: Validate context
+            is_valid, missing_sections = self.validate_context(context, sections)
+            
+            if validate and not is_valid:
+                raise ContextValidationError(
+                    f"Context validation failed. Missing sections: {missing_sections}"
+                )
+            
+            # Prepare result
+            result = {
+                "context": context,
+                "sections": sections,
+                "is_valid": is_valid,
+                "missing_sections": missing_sections,
+                "metadata": {
+                    "peripheral_name": peripheral_name,
+                    "total_chunks": len(all_chunks),
+                    "context_length": len(context),
+                    "estimated_tokens": len(context) // 4,
+                    "retrieval_timestamp": datetime.now().isoformat()
+                }
+            }
+            
+            self.logger.info(
+                f"Successfully retrieved context: {result['metadata']['total_chunks']} chunks, "
+                f"{result['metadata']['estimated_tokens']} tokens"
+            )
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Smart context retrieval failed: {e}")
+            raise
+    
+    def search_documents(
+        self,
+        query: str,
+        top_k: int = 10,
+        filters: Optional[Dict[str, Any]] = None,
+        collection_name: str = "peripheral_docs"
+    ) -> List[Dict[str, Any]]:
+        """
+        Search for relevant documents using vector similarity.
+        
+        Args:
+            query: Search query text
+            top_k: Number of results to return
+            filters: Optional metadata filters
+            collection_name: Collection to search in
+            
+        Returns:
+            List of relevant documents with scores
+        """
+        collection = self.doc_collection if collection_name == "peripheral_docs" else self.example_collection
+        
+        # Generate query embedding
+        query_embedding = self._generate_embeddings([query])[0]
+        
+        # Build search parameters
+        search_params = {
+            "metric_type": "L2",
+            "params": {"nprobe": 10}
+        }
+        
+        # Build filter expression if provided
+        expr = self._build_filter_expression(filters) if filters else None
+        
+        # Perform search
+        results = collection.search(
+            data=[query_embedding],
+            anns_field="embedding",
+            param=search_params,
+            limit=top_k,
+            expr=expr,
+            output_fields=["content", "metadata"]
+        )
+        
+        # Format results
+        documents = []
+        for hits in results:
+            for hit in hits:
+                documents.append({
+                    "id": hit.id,
+                    "content": hit.entity.get("content"),
+                    "metadata": hit.entity.get("metadata"),
+                    "score": hit.distance
+                })
+        
+        return documents
+    
+    def insert_documents(
+        self,
+        documents: List[Dict[str, Any]],
+        collection_name: str = "peripheral_docs"
+    ) -> List[int]:
+        """
+        Insert documents into Milvus collection.
+        
+        Args:
+            documents: List of documents with content and metadata
+            collection_name: Target collection name
+            
+        Returns:
+            List of inserted document IDs
+            
+        Raises:
+            MilvusException: If insertion fails
+        """
+        try:
+            collection = self.doc_collection if collection_name == "peripheral_docs" else self.example_collection
+            
+            # Prepare data for insertion
+            contents = [doc["content"] for doc in documents]
+            embeddings = self._generate_embeddings(contents)
+            metadata = [doc.get("metadata", {}) for doc in documents]
+            timestamps = [int(datetime.now().timestamp()) for _ in documents]
+            
+            # Insert data
+            entities = [
+                contents,
+                embeddings,
+                metadata,
+                timestamps
+            ]
+            
+            insert_result = collection.insert(entities)
+            collection.flush()
+            
+            self.logger.info(f"Inserted {len(documents)} documents into {collection_name}")
+            return insert_result.primary_keys
+            
+        except Exception as e:
+            self.logger.error(f"Failed to insert documents: {e}")
+            raise MilvusException(f"Failed to insert documents: {e}")
+    
+    def _generate_embeddings(self, texts: List[str]) -> List[List[float]]:
+        """
+        Generate embeddings for a list of texts.
+        
+        Args:
+            texts: List of text strings
+            
+        Returns:
+            List of embedding vectors
+        """
+        embeddings = self.embedding_model.encode(texts)
+        return embeddings.tolist()
+    
+    def _build_filter_expression(self, filters: Dict[str, Any]) -> str:
+        """
+        Build Milvus filter expression from dictionary.
+        
+        Args:
+            filters: Dictionary of field-value pairs
+            
+        Returns:
+            Filter expression string
+        """
+        expressions = []
+        for field, value in filters.items():
+            if isinstance(value, str):
+                expressions.append(f'metadata["{field}"] == "{value}"')
+            elif isinstance(value, (int, float)):
+                expressions.append(f'metadata["{field}"] == {value}')
+            elif isinstance(value, list):
+                values_str = ", ".join([f'"{v}"' if isinstance(v, str) else str(v) for v in value])
+                expressions.append(f'metadata["{field}"] in [{values_str}]')
+        
+        return " and ".join(expressions)
+    
+    def update_knowledge_base(self, knowledge_dir: str) -> Dict[str, int]:
+        """
+        Update knowledge base from directory of documents.
+        
+        Args:
+            knowledge_dir: Directory containing knowledge documents
+            
+        Returns:
+            Statistics about updated documents
+        """
+        knowledge_path = Path(knowledge_dir)
+        stats = {"processed": 0, "inserted": 0, "errors": 0}
+        
+        # Get chunking parameters from config
+        chunk_size = self.knowledge_config.get("indexing", {}).get("chunk_size", 1000)
+        chunk_overlap = self.knowledge_config.get("indexing", {}).get("chunk_overlap", 200)
+        
+        for file_path in knowledge_path.rglob("*.md"):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Extract metadata from file
+                peripheral_name = self._extract_peripheral_name(file_path)
+                section_type = self._extract_section_type(content)
+                
+                # Chunk the document
+                chunks = self._chunk_document(content, chunk_size, chunk_overlap)
+                
+                # Prepare documents for insertion
+                documents = []
+                for i, chunk in enumerate(chunks):
+                    metadata = {
+                        "source": str(file_path),
+                        "filename": file_path.name,
+                        "peripheral_name": peripheral_name,
+                        "section_type": section_type,
+                        "position": i,
+                        "total_chunks": len(chunks)
+                    }
+                    
+                    documents.append({
+                        "content": chunk,
+                        "metadata": metadata
+                    })
+                
+                # Insert documents
+                self.insert_documents(documents)
+                
+                stats["processed"] += 1
+                stats["inserted"] += len(documents)
+                
+            except Exception as e:
+                self.logger.error(f"Error processing {file_path}: {e}")
+                stats["errors"] += 1
+        
+        return stats
+    
+    def _chunk_document(self, content: str, chunk_size: int, overlap: int) -> List[str]:
+        """
+        Split document into overlapping chunks.
+        
+        Args:
+            content: Document content
+            chunk_size: Size of each chunk
+            overlap: Overlap between chunks
+            
+        Returns:
+            List of text chunks
+        """
+        chunks = []
+        start = 0
+        
+        while start < len(content):
+            end = start + chunk_size
+            chunk = content[start:end]
+            
+            # Try to break at sentence boundary
+            if end < len(content):
+                last_period = chunk.rfind('.')
+                if last_period > chunk_size * 0.8:  # If period is in last 20%
+                    chunk = chunk[:last_period + 1]
+                    end = start + last_period + 1
+            
+            chunks.append(chunk.strip())
+            start = end - overlap
+        
+        return chunks
+    
+    def _extract_peripheral_name(self, file_path: Path) -> str:
+        """
+        Extract peripheral name from file path or name.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            Extracted peripheral name
+        """
+        # Try to extract from filename
+        filename = file_path.stem.lower()
+        
+        # Remove common prefixes/suffixes
+        for prefix in ["chapter", "chatper", "section"]:
+            if filename.startswith(prefix):
+                filename = filename[len(prefix):].strip("-_ ")
+        
+        # Extract peripheral type from content
+        parts = filename.split("-")
+        if len(parts) > 1:
+            return parts[-1].strip()
+        
+        return filename
+    
+    def _extract_section_type(self, content: str) -> str:
+        """
+        Extract section type from document content.
+        
+        Args:
+            content: Document content
+            
+        Returns:
+            Detected section type
+        """
+        content_lower = content.lower()
+        
+        # Check for section indicators
+        if "memory map" in content_lower or "register map" in content_lower:
+            return SectionType.MEMORY_MAP.value
+        elif "register" in content_lower and "description" in content_lower:
+            return SectionType.REGISTERS.value
+        elif "functional description" in content_lower or "operation" in content_lower:
+            return SectionType.FUNCTIONAL_DESCRIPTION.value
+        elif "interrupt" in content_lower:
+            return SectionType.INTERRUPTS.value
+        elif "timing" in content_lower or "clock" in content_lower:
+            return SectionType.TIMING.value
+        elif "example" in content_lower or "code" in content_lower:
+            return SectionType.EXAMPLES.value
+        else:
+            return SectionType.OTHER.value
+    
+    def close(self) -> None:
+        """Close Milvus connection."""
+        try:
+            connections.disconnect("default")
+            self.logger.info("Disconnected from Milvus")
+        except Exception as e:
+            self.logger.error(f"Error closing Milvus connection: {e}")

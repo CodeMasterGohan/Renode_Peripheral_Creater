@@ -1,0 +1,428 @@
+{
+  "peripheral_type": "DMA",
+  "template_version": "1.0",
+  "standard_todos": [
+    {
+      "category": "register_implementation",
+      "todos": [
+        {
+          "title": "Implement DMA Control Register",
+          "description": "Implement main control register for DMA controller",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Global DMA enable/disable",
+            "Priority scheme selection",
+            "Arbitration mode",
+            "Error handling configuration"
+          ],
+          "acceptance_criteria": [
+            "DMA can be globally enabled/disabled",
+            "Priority schemes work correctly",
+            "Configuration changes take effect"
+          ]
+        },
+        {
+          "title": "Implement Channel Control Registers",
+          "description": "Implement per-channel control registers",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Channel enable/disable",
+            "Transfer direction",
+            "Transfer size (8/16/32-bit)",
+            "Burst mode configuration"
+          ],
+          "acceptance_criteria": [
+            "Each channel can be controlled independently",
+            "All transfer modes work",
+            "Configuration is channel-specific"
+          ]
+        },
+        {
+          "title": "Implement Source Address Registers",
+          "description": "Implement source address registers for each channel",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "32/64-bit addressing",
+            "Address increment/decrement/fixed",
+            "Circular buffer support",
+            "Alignment requirements"
+          ],
+          "acceptance_criteria": [
+            "Source addresses can be configured",
+            "Address modes work correctly",
+            "Alignment is enforced"
+          ]
+        },
+        {
+          "title": "Implement Destination Address Registers",
+          "description": "Implement destination address registers for each channel",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "32/64-bit addressing",
+            "Address increment/decrement/fixed",
+            "Circular buffer support",
+            "Alignment requirements"
+          ],
+          "acceptance_criteria": [
+            "Destination addresses can be configured",
+            "Address modes work correctly",
+            "Alignment is enforced"
+          ]
+        },
+        {
+          "title": "Implement Transfer Count Registers",
+          "description": "Implement transfer count/size registers",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Current count and reload value",
+            "Different count modes",
+            "Block/burst counting",
+            "Zero detection"
+          ],
+          "acceptance_criteria": [
+            "Transfer counts work correctly",
+            "Reload functionality works",
+            "Completion is detected"
+          ]
+        },
+        {
+          "title": "Implement Channel Status Registers",
+          "description": "Implement status registers for each channel",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Active/idle status",
+            "Error flags",
+            "Completion flags",
+            "Request pending flags"
+          ],
+          "acceptance_criteria": [
+            "Status accurately reflects channel state",
+            "All flags work correctly",
+            "Can be cleared appropriately"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "state_management",
+      "todos": [
+        {
+          "title": "Implement Channel State Machines",
+          "description": "Implement state machine for each DMA channel",
+          "priority": "critical",
+          "effort_estimate": "extra-large",
+          "implementation_hints": [
+            "Idle, Active, Suspended, Error states",
+            "State transition logic",
+            "Priority arbitration",
+            "Request handling"
+          ],
+          "acceptance_criteria": [
+            "State machines operate correctly",
+            "Transitions are valid",
+            "Priority is respected"
+          ]
+        },
+        {
+          "title": "Implement Transfer Engine",
+          "description": "Core transfer engine for moving data",
+          "priority": "critical",
+          "effort_estimate": "extra-large",
+          "implementation_hints": [
+            "Read/write operations",
+            "Burst transfer support",
+            "Bus arbitration",
+            "Error detection"
+          ],
+          "acceptance_criteria": [
+            "Data transfers correctly",
+            "All transfer sizes work",
+            "Performance is acceptable"
+          ]
+        },
+        {
+          "title": "Implement Request Arbitration",
+          "description": "Arbitrate between multiple channel requests",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Fixed priority scheme",
+            "Round-robin scheme",
+            "Weighted priority",
+            "Request queuing"
+          ],
+          "acceptance_criteria": [
+            "Arbitration works correctly",
+            "Priority schemes function",
+            "No starvation occurs"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "external_interfaces",
+      "todos": [
+        {
+          "title": "Implement Peripheral Request Interface",
+          "description": "Interface for peripheral DMA requests",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Request input pins/signals",
+            "Request acknowledge outputs",
+            "Handshaking protocol",
+            "Edge/level triggering"
+          ],
+          "acceptance_criteria": [
+            "Peripherals can request transfers",
+            "Handshaking works correctly",
+            "All trigger modes work"
+          ]
+        },
+        {
+          "title": "Implement Memory Bus Interface",
+          "description": "Interface to system memory bus",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Bus master capability",
+            "Read/write transactions",
+            "Burst transfers",
+            "Bus error handling"
+          ],
+          "acceptance_criteria": [
+            "Can access memory correctly",
+            "Burst transfers work",
+            "Errors are handled"
+          ]
+        },
+        {
+          "title": "Implement Channel Linking Interface",
+          "description": "Support for linking DMA channels",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Channel-to-channel triggers",
+            "Completion triggers next",
+            "Circular linking",
+            "Link configuration"
+          ],
+          "acceptance_criteria": [
+            "Channels can be linked",
+            "Triggers work correctly",
+            "Circular links function"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "interrupt_handling",
+      "todos": [
+        {
+          "title": "Implement Transfer Complete Interrupts",
+          "description": "Generate interrupts on transfer completion",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Per-channel interrupts",
+            "Half-complete option",
+            "Block complete for scatter-gather",
+            "Individual enables"
+          ],
+          "acceptance_criteria": [
+            "Completion interrupts work",
+            "Can be individually enabled",
+            "Timing is correct"
+          ]
+        },
+        {
+          "title": "Implement Error Interrupts",
+          "description": "Generate interrupts on DMA errors",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Bus error interrupts",
+            "Configuration error interrupts",
+            "Address alignment errors",
+            "Per-channel enables"
+          ],
+          "acceptance_criteria": [
+            "All errors generate interrupts",
+            "Can identify error source",
+            "Can be individually enabled"
+          ]
+        },
+        {
+          "title": "Implement Request Overflow Interrupts",
+          "description": "Handle request overflow conditions",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Detect missed requests",
+            "Per-channel detection",
+            "Overflow counters",
+            "Clear mechanisms"
+          ],
+          "acceptance_criteria": [
+            "Overflows are detected",
+            "Interrupts fire correctly",
+            "Can be cleared"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "dma_support",
+      "todos": [
+        {
+          "title": "Implement Scatter-Gather Support",
+          "description": "Support for scatter-gather DMA operations",
+          "priority": "medium",
+          "effort_estimate": "extra-large",
+          "implementation_hints": [
+            "Descriptor format",
+            "Descriptor chaining",
+            "Descriptor caching",
+            "Completion handling"
+          ],
+          "acceptance_criteria": [
+            "Descriptors are processed correctly",
+            "Chaining works properly",
+            "Performance is acceptable"
+          ]
+        },
+        {
+          "title": "Implement Circular Buffer Mode",
+          "description": "Support for circular buffer transfers",
+          "priority": "medium",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Address wrap-around",
+            "Continuous operation",
+            "Position tracking",
+            "Overflow handling"
+          ],
+          "acceptance_criteria": [
+            "Circular mode works correctly",
+            "Wrap-around is seamless",
+            "No data loss"
+          ]
+        },
+        {
+          "title": "Implement Memory-to-Memory Transfers",
+          "description": "Support for memory-to-memory DMA",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Software triggered",
+            "Block transfers",
+            "Performance optimization",
+            "Cache considerations"
+          ],
+          "acceptance_criteria": [
+            "Memory copies work correctly",
+            "Performance is good",
+            "All sizes supported"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "testing",
+      "todos": [
+        {
+          "title": "Create Basic Transfer Tests",
+          "description": "Test fundamental DMA transfer operations",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Single transfers",
+            "Block transfers",
+            "Different sizes",
+            "All addressing modes"
+          ],
+          "acceptance_criteria": [
+            "All transfer types work",
+            "Data integrity maintained",
+            "Addressing modes function"
+          ]
+        },
+        {
+          "title": "Create Multi-Channel Tests",
+          "description": "Test multiple simultaneous channels",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Concurrent transfers",
+            "Priority testing",
+            "Arbitration verification",
+            "Performance measurement"
+          ],
+          "acceptance_criteria": [
+            "Channels work simultaneously",
+            "Priority is respected",
+            "No data corruption"
+          ]
+        },
+        {
+          "title": "Create Error Condition Tests",
+          "description": "Test error detection and handling",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Bus error simulation",
+            "Invalid configurations",
+            "Address violations",
+            "Recovery testing"
+          ],
+          "acceptance_criteria": [
+            "Errors are detected",
+            "Recovery works properly",
+            "No system hang"
+          ]
+        }
+      ]
+    }
+  ],
+  "optional_features": [
+    {
+      "feature": "2D DMA Support",
+      "todos": [
+        {
+          "title": "Implement 2D Transfer Mode",
+          "description": "Support for 2D/rectangular DMA transfers",
+          "priority": "low",
+          "effort_estimate": "extra-large"
+        }
+      ]
+    },
+    {
+      "feature": "Compression/Decompression",
+      "todos": [
+        {
+          "title": "Implement Data Processing",
+          "description": "On-the-fly data compression/decompression",
+          "priority": "low",
+          "effort_estimate": "extra-large"
+        }
+      ]
+    },
+    {
+      "feature": "CRC Calculation",
+      "todos": [
+        {
+          "title": "Implement CRC Engine",
+          "description": "Calculate CRC during transfers",
+          "priority": "low",
+          "effort_estimate": "large"
+        }
+      ]
+    }
+  ]
+}

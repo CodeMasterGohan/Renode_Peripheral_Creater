@@ -1,0 +1,401 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Step 4: Architecture Schema",
+  "description": "Schema for validating Renode peripheral architecture design",
+  "type": "object",
+  "properties": {
+    "peripheral_name": {
+      "type": "string",
+      "description": "Name of the peripheral"
+    },
+    "class_name": {
+      "type": "string",
+      "pattern": "^[A-Z][a-zA-Z0-9]*$",
+      "description": "C# class name for the peripheral"
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9]*(\\.[A-Za-z][A-Za-z0-9]*)*$",
+      "description": "C# namespace for the peripheral"
+    },
+    "base_class": {
+      "type": "string",
+      "description": "Base class to inherit from"
+    },
+    "interfaces": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Interfaces to implement"
+    },
+    "class_structure": {
+      "type": "object",
+      "properties": {
+        "constructors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["name", "type"]
+                }
+              },
+              "description": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[A-Z][a-zA-Z0-9]*$"
+              },
+              "type": {
+                "type": "string"
+              },
+              "access_modifier": {
+                "type": "string",
+                "enum": ["public", "private", "protected", "internal"]
+              },
+              "description": {
+                "type": "string"
+              },
+              "default_value": {
+                "type": ["string", "number", "boolean", "null"]
+              }
+            },
+            "required": ["name", "type", "access_modifier"]
+          }
+        },
+        "methods": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "return_type": {
+                "type": "string"
+              },
+              "access_modifier": {
+                "type": "string",
+                "enum": ["public", "private", "protected", "internal"]
+              },
+              "is_override": {
+                "type": "boolean"
+              },
+              "is_virtual": {
+                "type": "boolean"
+              },
+              "parameters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["name", "type"]
+                }
+              },
+              "description": {
+                "type": "string"
+              },
+              "implementation_notes": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "return_type", "access_modifier"]
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "type"]
+          }
+        },
+        "inner_classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["name", "purpose"]
+          }
+        }
+      }
+    },
+    "register_implementation": {
+      "type": "object",
+      "properties": {
+        "register_collection_type": {
+          "type": "string",
+          "enum": ["DoubleWordRegisterCollection", "WordRegisterCollection", "ByteRegisterCollection"],
+          "description": "Type of register collection to use"
+        },
+        "register_definitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "register_name": {
+                "type": "string"
+              },
+              "property_name": {
+                "type": "string"
+              },
+              "initialization_strategy": {
+                "type": "string",
+                "enum": ["DefineRegister", "DefineRegisterField", "DefineRegisterCollection"],
+                "description": "How to initialize this register"
+              },
+              "callbacks": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["ChangeCallback", "ReadCallback", "WriteCallback"]
+                    },
+                    "method_name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["type", "method_name"]
+                }
+              }
+            },
+            "required": ["register_name", "property_name", "initialization_strategy"]
+          }
+        }
+      }
+    },
+    "state_management": {
+      "type": "object",
+      "properties": {
+        "state_variables": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "persistence": {
+                "type": "boolean",
+                "description": "Whether this state needs to be saved/restored"
+              }
+            },
+            "required": ["name", "type", "purpose"]
+          }
+        },
+        "state_machines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "initial_state": {
+                "type": "string"
+              },
+              "transitions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "type": "string"
+                    },
+                    "to": {
+                      "type": "string"
+                    },
+                    "trigger": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["from", "to", "trigger"]
+                }
+              }
+            },
+            "required": ["name", "states", "initial_state"]
+          }
+        }
+      }
+    },
+    "external_connections": {
+      "type": "object",
+      "properties": {
+        "gpio_connections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "direction": {
+                "type": "string",
+                "enum": ["input", "output", "bidirectional"]
+              },
+              "property_name": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "direction", "property_name"]
+          }
+        },
+        "interrupt_outputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "property_name": {
+                "type": "string"
+              },
+              "trigger_conditions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": ["name", "property_name"]
+          }
+        },
+        "clock_inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "property_name": {
+                "type": "string"
+              },
+              "default_frequency": {
+                "type": "integer"
+              }
+            },
+            "required": ["name", "property_name"]
+          }
+        }
+      }
+    },
+    "implementation_patterns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "pattern_name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "applicable_to": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["pattern_name", "description"]
+      }
+    },
+    "testing_strategy": {
+      "type": "object",
+      "properties": {
+        "unit_tests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of unit test scenarios"
+        },
+        "integration_tests": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of integration test scenarios"
+        },
+        "test_registers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Registers that need specific testing"
+        }
+      }
+    }
+  },
+  "required": ["peripheral_name", "class_name", "namespace", "base_class", "class_structure"]
+}

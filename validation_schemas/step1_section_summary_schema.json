@@ -1,0 +1,80 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Step 1: Section Summary Schema",
+  "description": "Schema for validating section summaries extracted from documentation",
+  "type": "object",
+  "properties": {
+    "peripheral_name": {
+      "type": "string",
+      "description": "Name of the peripheral being documented"
+    },
+    "chapter_title": {
+      "type": "string",
+      "description": "Title of the chapter being summarized"
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "section_number": {
+            "type": "string",
+            "pattern": "^[0-9]+(\\.[0-9]+)*$",
+            "description": "Section number (e.g., '1.2.3')"
+          },
+          "section_title": {
+            "type": "string",
+            "description": "Title of the section"
+          },
+          "summary": {
+            "type": "string",
+            "minLength": 50,
+            "description": "Comprehensive summary of the section content"
+          },
+          "key_concepts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Key concepts covered in this section"
+          },
+          "relevance_to_renode": {
+            "type": "string",
+            "enum": ["high", "medium", "low", "none"],
+            "description": "Relevance of this section to Renode implementation"
+          },
+          "subsections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "subsection_number": {
+                  "type": "string"
+                },
+                "subsection_title": {
+                  "type": "string"
+                },
+                "brief_summary": {
+                  "type": "string"
+                }
+              },
+              "required": ["subsection_number", "subsection_title"]
+            }
+          }
+        },
+        "required": ["section_number", "section_title", "summary", "relevance_to_renode"]
+      }
+    },
+    "overall_summary": {
+      "type": "string",
+      "minLength": 100,
+      "description": "Overall summary of the entire chapter"
+    },
+    "implementation_priority": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low"],
+      "description": "Priority for implementing this peripheral in Renode"
+    }
+  },
+  "required": ["peripheral_name", "chapter_title", "sections", "overall_summary"]
+}

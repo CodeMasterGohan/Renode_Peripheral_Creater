@@ -1,0 +1,247 @@
+{
+  "peripheral_type": "GPIO",
+  "template_version": "1.0",
+  "standard_todos": [
+    {
+      "category": "register_implementation",
+      "todos": [
+        {
+          "title": "Implement GPIO Data Register",
+          "description": "Implement the GPIO data register with proper read/write handling for pin states",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Use IFlagRegisterField for individual pin bits",
+            "Implement ChangeCallback to handle pin state changes",
+            "Consider pin direction when reading/writing"
+          ],
+          "acceptance_criteria": [
+            "Pin states can be read and written correctly",
+            "Direction register affects data register behavior",
+            "External pin changes are reflected in the register"
+          ]
+        },
+        {
+          "title": "Implement GPIO Direction Register",
+          "description": "Implement the GPIO direction register to control pin input/output modes",
+          "priority": "critical",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "0 = input, 1 = output is common convention",
+            "Changing direction should affect data register behavior",
+            "Consider implementing tri-state support"
+          ],
+          "acceptance_criteria": [
+            "Pin directions can be configured",
+            "Direction changes affect data register operations",
+            "Default direction is properly set on reset"
+          ]
+        },
+        {
+          "title": "Implement GPIO Interrupt Enable Register",
+          "description": "Implement interrupt enable register for GPIO pins",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "One bit per GPIO pin",
+            "Work in conjunction with interrupt type registers",
+            "Consider global interrupt enable"
+          ],
+          "acceptance_criteria": [
+            "Interrupts can be enabled/disabled per pin",
+            "Disabled interrupts don't trigger",
+            "Register resets to disabled state"
+          ]
+        },
+        {
+          "title": "Implement GPIO Interrupt Type Registers",
+          "description": "Implement registers to configure interrupt trigger types (edge/level)",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Support level-high, level-low, rising-edge, falling-edge",
+            "May need multiple registers for full configuration",
+            "Consider both-edge detection support"
+          ],
+          "acceptance_criteria": [
+            "All interrupt types are configurable",
+            "Interrupt generation matches configured type",
+            "Edge detection works correctly"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "external_interfaces",
+      "todos": [
+        {
+          "title": "Implement GPIO Pin Connections",
+          "description": "Create external GPIO connections for each pin",
+          "priority": "critical",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Use IGPIO interface for each pin",
+            "Implement both input and output functionality",
+            "Consider pin numbering scheme"
+          ],
+          "acceptance_criteria": [
+            "All GPIO pins are accessible externally",
+            "Pin state changes propagate correctly",
+            "External connections can drive input pins"
+          ]
+        },
+        {
+          "title": "Implement Pin Change Notifications",
+          "description": "Implement mechanism to notify peripheral of external pin changes",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Use GPIO.Connect() for external connections",
+            "Handle state change callbacks",
+            "Update data register on input changes"
+          ],
+          "acceptance_criteria": [
+            "External pin changes are detected",
+            "Data register reflects current pin states",
+            "Interrupts are triggered on configured changes"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "interrupt_handling",
+      "todos": [
+        {
+          "title": "Implement Interrupt Generation Logic",
+          "description": "Implement logic to generate interrupts based on pin changes and configuration",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Check interrupt enable and type configuration",
+            "Implement edge detection logic",
+            "Handle interrupt clearing mechanism"
+          ],
+          "acceptance_criteria": [
+            "Interrupts are generated correctly for all trigger types",
+            "Multiple simultaneous interrupts are handled",
+            "Interrupt status can be cleared"
+          ]
+        },
+        {
+          "title": "Implement Interrupt Status Register",
+          "description": "Implement register to indicate which pins have pending interrupts",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "One bit per GPIO pin",
+            "Set on interrupt condition, clear on write-1-to-clear",
+            "Consider read-clear option"
+          ],
+          "acceptance_criteria": [
+            "Status bits are set on interrupt conditions",
+            "Status can be cleared by software",
+            "Multiple interrupts can be pending"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "state_management",
+      "todos": [
+        {
+          "title": "Implement Pin State Tracking",
+          "description": "Track current state of all GPIO pins internally",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Maintain internal state array",
+            "Synchronize with register values",
+            "Handle reset conditions"
+          ],
+          "acceptance_criteria": [
+            "Pin states are accurately tracked",
+            "State persists across register reads",
+            "Reset sets pins to default state"
+          ]
+        },
+        {
+          "title": "Implement Pull-up/Pull-down Configuration",
+          "description": "Implement optional pull-up/pull-down resistor configuration",
+          "priority": "medium",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "May need separate configuration register",
+            "Affects behavior of input pins",
+            "Consider weak/strong pull options"
+          ],
+          "acceptance_criteria": [
+            "Pull resistors can be configured",
+            "Input pins behave correctly with pulls",
+            "Configuration persists across resets"
+          ]
+        }
+      ]
+    },
+    {
+      "category": "testing",
+      "todos": [
+        {
+          "title": "Create GPIO Pin Toggle Tests",
+          "description": "Test basic pin input/output functionality",
+          "priority": "high",
+          "effort_estimate": "medium",
+          "implementation_hints": [
+            "Test all pins individually",
+            "Verify direction control",
+            "Test external driving of inputs"
+          ],
+          "acceptance_criteria": [
+            "All pins can be toggled",
+            "Direction control works correctly",
+            "External inputs are detected"
+          ]
+        },
+        {
+          "title": "Create Interrupt Generation Tests",
+          "description": "Test all interrupt trigger types and configurations",
+          "priority": "high",
+          "effort_estimate": "large",
+          "implementation_hints": [
+            "Test each trigger type",
+            "Test interrupt enable/disable",
+            "Test simultaneous interrupts"
+          ],
+          "acceptance_criteria": [
+            "All interrupt types work correctly",
+            "Interrupt masking works",
+            "No spurious interrupts"
+          ]
+        }
+      ]
+    }
+  ],
+  "optional_features": [
+    {
+      "feature": "Alternate Function Support",
+      "todos": [
+        {
+          "title": "Implement Alternate Function Registers",
+          "description": "Support for alternate pin functions (UART, SPI, etc.)",
+          "priority": "low",
+          "effort_estimate": "large"
+        }
+      ]
+    },
+    {
+      "feature": "Open Drain Support",
+      "todos": [
+        {
+          "title": "Implement Open Drain Configuration",
+          "description": "Support for open-drain output mode",
+          "priority": "low",
+          "effort_estimate": "medium"
+        }
+      ]
+    }
+  ]
+}

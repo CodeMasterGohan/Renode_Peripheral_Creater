@@ -1,0 +1,286 @@
+### Chatper 7 Crossbar Switch (XBAR)
+
+## 7.1 Introduction
+
+This chapter describes the multi-port crossbar switch (XBAR), which supports simultaneous connections between four (three for MPC5554) master ports and five slave ports. XBAR supports a 32-bit address bus width and a 64-bit data bus width at all master and slave ports.
+
+## 7.1.1 Block Diagram
+
+Figure 7-1 shows a block diagram of the crossbar switch. Table 7-1 gives the crossbar switch port for each master and slave, and the assigned and fixed ID number for each master.
+
+Figure 7-1. XBAR Block Diagram
+
+<!-- image -->
+
+Table 7-1. XBAR Switch Ports
+
+| Module                             | XBAR Port   |   Master ID |
+|------------------------------------|-------------|-------------|
+| e200z6 core - CPU instruction/data | Master 0    |           0 |
+| e200z6 - Nexus                     |             |           1 |
+| eDMA                               | Master 1    |           2 |
+| External Bus Interface             | Master 2    |           3 |
+
+Table 7-1. XBAR Switch Ports
+
+| Module                          | XBAR Port   | Master ID   |
+|---------------------------------|-------------|-------------|
+| FEC (MPC5553 only)              | Master 3    | 4           |
+| Flash                           | Slave 0     |             |
+| External Bus Interface          | Slave 1     |             |
+| Internal SRAM                   | Slave 3     |             |
+| Peripheral Bridge A (PBRIDGE_A) | Slave 6     |             |
+| Peripheral Bridge B (PBRIDGE_B) | Slave 7     |             |
+
+## 7.1.2 Overview
+
+The XBAR allows for concurrent transactions to occur from any master port to any slave port. It is possible for all master ports and slave ports to be in use at the same time as a result of independent master requests. If a slave port is simultaneously requested by more than one master port, arbitration logic will select the higher priority master and grant it ownership of the slave port. All other masters requesting that slave port will be stalled until the higher priority master completes its transactions.
+
+By default, requesting masters will be granted access based on a fixed priority. A round-robin priority mode also is available. In this mode, requesting masters will be treated with equal priority and will be granted access to a slave port in round-robin fashion, based upon the ID of the last master to be granted access. A block diagram of the XBAR is shown in Figure 7-1.
+
+The XBAR can place each slave port in a low-power park mode so that particular slave port will not dissipate any power transitioning address, control or data signals when not being actively accessed by a master port. There is a one-cycle arbitration overhead for exiting low power park mode.
+
+Each slave port can independently support multiple master priority schemes. Each slave port has a hardware input that selects the master priority scheme so the user can dynamically change master priority levels on a slave-port-by-slave-port basis.
+
+## 7.1.3 Features
+
+- · Four (Three for MPC5554) master ports:
+- - e200z6 core
+- - eDMA
+- - EBI
+- - FEC (MPC5553 only)
+- · Five slave ports
+- - Flash (refer to Section Chapter 13, 'Flash Memory' for information on accessing Flash)
+- - EBI
+- - Internal SRAM
+- - Peripheral bridge A
+
+- - Peripheral bridge B
+- · 32-bit address, 64-bit data paths
+- · Fully concurrent transfers between independent master and slave ports
+
+## 7.1.4 Modes of Operation
+
+## 7.1.4.1 Normal Mode
+
+In normal mode, the XBAR provides the register interface and logic that controls crossbar switch configuration.
+
+## 7.1.4.2 Debug Mode
+
+The XBAR operation in debug mode is identical to operation in normal mode.
+
+## 7.2 Memory Map/Register Definition
+
+The memory map for the XBAR program-visible registers is shown in Table 7-2.
+
+Table 7-2. XBAR Register Memory Map
+
+| Address                     | Register Name   | Register Description                              | Size (bits)   |
+|-----------------------------|-----------------|---------------------------------------------------|---------------|
+| Base (0xFFF0_4000)          | XBAR_MPR0       | Master priority register for slave port 0         | 32            |
+| Base + 0x004- Base + 0x00F  | -               | Reserved                                          | -             |
+| Base + 0x010                | XBAR_SGPCR0     | General-purpose control register for slave port 0 | 32            |
+| Base + 0x014- Base + 0x0FF  | -               | Reserved                                          | -             |
+| Base + 0x100                | XBAR_MPR1       | Master priority register for slave port 1         | 32            |
+| Base + 0x104- Base + 0x10F  | -               | Reserved                                          | -             |
+| Base + 0x110                | XBAR_SGPCR1     | General-purpose control register for slave port 1 | 32            |
+| Base + 0x114- Base + 0x02FF | -               | Reserved                                          | -             |
+| Base + 0x300                | XBAR_MPR3       | Master priority register for slave port 3         | 32            |
+| Base + 0x304- Base + 0x30F  | -               | Reserved                                          | -             |
+| Base + 0x310                | XBAR_SGPCR3     | General-purpose control register for slave port 3 | 32            |
+| Base + 0x314- Base + 0x05FF | -               | Reserved                                          | -             |
+| Base + 0x600                | XBAR_MPR6       | Master priority register for slave port 6         | 32            |
+
+Table 7-2. XBAR Register Memory Map (continued)
+
+| Address                       | Register Name   | Register Description                              | Size (bits)   |
+|-------------------------------|-----------------|---------------------------------------------------|---------------|
+| Base + 0x604- Base + 0x60F    | -               | Reserved                                          | -             |
+| Base + 0x610                  | XBAR_SGPCR6     | General-purpose control register for slave port 6 | 32            |
+| Base + 0x614- Base + 0x06FF   | -               | Reserved                                          | -             |
+| Base + 0x700                  | XBAR_MPR7       | Master priority register for slave port 7         | 32            |
+| Base + 0x704- Base + 0x70F    | -               | Reserved                                          | -             |
+| Base + 0x710                  | XBAR_SGPCR7     | General-purpose control register for slave port 7 | 32            |
+| Base + 0x714- Base + 0x3_FFFF | -               | Reserved                                          | -             |
+
+## 7.2.1 Register Descriptions
+
+There are two registers for each slave port of the XBAR. The registers can only be accessed in supervisor mode using 32-bit accesses.
+
+The slave SGPCR also features a bit (RO), which when written with a 1, will prevent all slave registers for that port from being written to again until a reset occurs. The registers will still be readable, but future write attempts will have no effect on the registers and will be terminated with an error response.
+
+## 7.2.1.1 Master Priority Registers (XBAR\_MPR n )
+
+The XBAR\_MPR for a slave port sets the priority of each master port when operating in fixed priority mode. They are ignored in round-robin priority mode unless more than one master has been assigned high priority by a slave.
+
+## NOTE
+
+Masters must be assigned unique priority levels.
+
+The master priority register can only be accessed in supervisor mode with 32-bit accesses. Once the RO (read only) bit has been set in the slave general-purpose control register, the master priority register can only be read. Attempts to write to it will have no effect on the MPR and will result in an error response.
+
+## NOTE
+
+XBAR\_MPR should be written with a read/modify/write for code compatibility.
+
+Figure 7-2. Master Priority Registers (XBAR\_MPR n )
+
+<!-- image -->
+
+|                   | 0                                                                                                    | 1                                                                                                    | 2                                                                                                    | 3                                                                                                    | 4                                                                                                    | 5                                                                                                    | 6                                                                                                    | 7                                                                                                    | 8                                                                                                    | 9                                                                                                    | 10                                                                                                   | 11                                                                                                   | 12                                                                                                   | 13                                                                                                   | 14                                                                                                   | 15                                                                                                   |
+|-------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| R                 | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    |
+| W                 |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |
+| Reset for MPC5554 | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    |
+| Reset for MPC5553 | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    |
+| Reg Addr          | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) |
+|                   | 16                                                                                                   | 17                                                                                                   | 18                                                                                                   | 19                                                                                                   | 20                                                                                                   | 21                                                                                                   | 22                                                                                                   | 23                                                                                                   | 24                                                                                                   | 25                                                                                                   | 26                                                                                                   | 27                                                                                                   | 28                                                                                                   | 29                                                                                                   | 30                                                                                                   | 31                                                                                                   |
+| R                 | 0                                                                                                    | 0                                                                                                    | MSTR3                                                                                                | 1                                                                                                    | 0                                                                                                    | 0                                                                                                    | MSTR2                                                                                                |                                                                                                      | 0                                                                                                    | 0                                                                                                    | MSTR1                                                                                                |                                                                                                      | 0                                                                                                    | 0                                                                                                    | MSTR0                                                                                                | MSTR0                                                                                                |
+| W                 |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |                                                                                                      |
+| Reset for MPC5554 | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 1                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 1                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    |
+| Reset for MPC5553 | 0                                                                                                    | 0                                                                                                    | 1                                                                                                    | 1                                                                                                    | 0                                                                                                    | 0                                                                                                    | 1                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 1                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    | 0                                                                                                    |
+| Reg Addr          | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) | Base + 0x000 (XBAR_MPR0); 0x100 (XBAR_MPR1); 0x300 (XBAR_MPR3); 0x600 (XBAR_MPR6); 0x700 (XBAR_MPR7) |
+
+1 MSTR3 is supported only in the MPC5553.
+
+Table 7-3. XBAR\_MPR n Descriptions
+
+| Bits   | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|--------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0-17   | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 18-19  | MSTR3  | Master 3 priority. Set the arbitration priority for master port 3 on the associated slave port. 00 This master has the highest priority when accessing the slave port. 01 This master has the 2nd highest priority when accessing the slave port 10 This master has the 3rd highest priority when accessing the slave port.. 11 This master has the lowest priority when accessing the slave port. Note: This field is supported only in the MPC5553. |
+| 20-21  | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 22-23  | MSTR2  | Master 2 priority. Set the arbitration priority for master port 2 on the associated slave port. 00 This master has the highest priority when accessing the slave port. 01 This master has the 2nd highest priority when accessing the slave port 10 This master has the 3rd highest priority when accessing the slave port.. 11 This master has the lowest priority when accessing the slave port.                                                    |
+| 24-25  | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| 26-27  | MSTR1  | Master 1 priority. Set the arbitration priority for master port 1 on the associated slave port. 00 This master has the highest priority when accessing the slave port. 01 This master has the 2nd highest priority when accessing the slave port 10 This master has the 3rd highest priority when accessing the slave port.. 11 This master has the lowest priority when accessing the slave port.                                                    |
+
+Table 7-3. XBAR\_MPR n Descriptions (continued)
+
+| Bits   | Name   | Description                                                                                                                                                                                                                                                                                        |
+|--------|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 28-29  | -      | Reserved.                                                                                                                                                                                                                                                                                          |
+| 30-31  | MSTR0  | 00 This master has the highest priority when accessing the slave port. 01 This master has the 2nd highest priority when accessing the slave port 10 This master has the 3rd highest priority when accessing the slave port.. 11 This master has the lowest priority when accessing the slave port. |
+
+## 7.2.1.2 Slave General-Purpose Control Registers (XBAR\_SGPCR n )
+
+The XBAR\_SGPCR  of a slave port controls several features of the slave port, including the following: n
+
+- · Round-robin or fixed arbitration policy for a particular slave port
+- · Write protection of any slave port registers
+- · Parking algorithm used for a slave port
+
+The PARK field indicates which master port this slave port will park on when no active access attempts are being made to the slave and the parking control field is set to park on a specific master.
+
+XBAR\_SGPCR [PARK] should only be programmed to select master ports that are actually available on n the device, otherwise undefined behavior will result. The low-power park feature can result in an overall power savings if the slave port is not saturated; however, an extra clock of latency will result whenever any master tries to access a slave (not being accessed by another master) because it will not be parked on any master.
+
+The XBAR\_SGPCR can only be accessed in supervisor mode with 32-bit accesses. Once the RO (read only) bit has been set in the XBAR\_SGPCR, the XBAR\_SGPCR and the SBAR\_MPR can only be read. Attempts to write to them will have no effect and will result in an error response.
+
+<!-- image -->
+
+- 2 Some of these unused bits are writeable and readable, but  the bits serve no function.  Setting any of these bits has no effect on the operation of this module.
+
+Figure 7-3. Slave General-Purpose Control Registers (XBAR\_SGPCR n )
+
+Table 7-4. XBAR\_SGPCR n Field Descriptions
+
+| Bits   | Name   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+|--------|--------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 0      | RO     | Read only. Used to force all of a slave port's registers to be read only. Once written to 1 it can only be cleared by hardware reset. This bit is cleared by hardware reset. 0 All this slave port's registers can be written. 1 All this slave port's registers are read only and cannot be written (attempted writes have no effect and result in an error response).                                                                                                                                                                                                                  |
+| 1-21   | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 22-23  | ARB    | Arbitration mode. Used to select the arbitration policy for the slave port. This field is initialized by hardware reset. 00 Fixed priority using MPR 01 Round-robin priority 1x Reserved                                                                                                                                                                                                                                                                                                                                                                                                 |
+| 24-25  | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 26-27  | PCTL   | Parking control. Used to select the parking algorithm used by the slave port. This field is initialized by hardware reset. 00 When no master is making a request, the arbiter will park the slave port on the master port defined by the PARK control field. 01 POL - Park on last. When no master is making a request, the arbiter will park the slave port on the last master to own the slave port. 10 LPP - Low power park. When no master is making a request, the arbiter will park the slave port on no master and will drive all slave port outputs to a safe state. 11 Reserved |
+| 28     | -      | Reserved.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 29-31  | PARK   | Park. Used to determine which master port this slave port parks on when no masters are actively making requests . PCTL must be set to 00. 000 Park on master port 0 001 Park on master port 1 010 Park on master port 2 011 Park on master port 3 (Applies to MPC5553 only) 100 Illegal master port 101 Illegal master port 110 Illegal master port 111 Illegal master port                                                                                                                                                                                                              |
+
+## 7.3 Functional Description
+
+This section describes the functionality of the XBAR in more detail.
+
+## 7.3.1 Overview
+
+The main goal of the XBAR is to increase overall system performance by allowing multiple masters to communicate concurrently with multiple slaves. In order to maximize data throughput it is essential to keep arbitration delays to a minimum.
+
+This section examines data throughput from the point of view of masters and slaves, detailing when the XBAR will stall masters, or insert bubbles on the slave side.
+
+## 7.3.2 General Operation
+
+When a master makes an access to the XBAR from an idle master state, the access will be  taken immediately by the XBAR. If the targeted slave port of the access is available (that is, the requesting master is currently granted ownership of the slave port), the access will be immediately presented on the slave port. It is possible to make single clock (zero wait state) accesses through the XBAR by a granted master. If the targeted slave port of the access is busy or parked on a different master port, the requesting master will simply see wait states inserted until the targeted slave port can service the master's request. The latency in servicing the request will depend on each master's priority level and the responding slave's access time.
+
+Because the XBAR appears to be just another slave to the master device, the master device will have no knowledge of whether or not it actually owns the slave port it is targeting. While the master does not have control of the slave port it is targeting it will simply be wait-stated.
+
+A master will be given control of a targeted slave port only after a previous access to a different slave port has completed, regardless of its priority on the newly targeted slave port. This prevents deadlock from occurring when a master has an outstanding request to slave port A that has a long response time, has a pending access to a different slave port B, and a lower priority master also makes a request to the different slave port B. In this case, the lower priority master will be granted bus ownership of slave port B after a cycle of arbitration, assuming the higher priority master's slave port A access is not terminated.
+
+Once a master has control of the slave port it is targeting, the master will remain in control of that slave port until it either gives up the slave port by running an IDLE cycle, leaves that slave port for its next access, or loses control of the slave port to a higher priority master with a request to the same slave port. However, since all masters run a fixed-length burst transfer to a slave port, it will retain control of the slave port until that transfer sequence is completed. In round-robin arbitration mode, the current master will be forced to hand off bus ownership to an alternately requesting master at the end of its current transfer sequence.
+
+When a slave bus is being idled by the XBAR, it can be parked on the master port indicated by the PARK bits in the XBAR\_SGPCR (slave general-purpose control register), or on the last master to have control of the slave port. This can be done in an attempt to save the initial clock of arbitration delay that would otherwise be seen if the master had to arbitrate to gain control of the slave port. The slave port can also be put into low power park mode in attempt to save power.
+
+## 7.3.3 Master Ports
+
+The XBAR will terminate an access and it will not be allowed to pass through the XBAR unless the master currently is granted access to the slave port to which the access is targeted. A master access will be taken if  the slave port to which the access decodes is either currently servicing the master or is parked on the master. In this case the XBAR will be completely transparent and the master's access will be immediately seen on the slave bus and no arbitration delays will be incurred. A master access will be stalled if the access decodes to a slave port that is busy serving another master, parked on another master or is in low-power park mode.
+
+If the slave port is currently parked on another master or is in low power park mode, and no other master is requesting access to the slave port, then only one clock of arbitration will be incurred. If the slave port
+
+is currently serving another master of a lower priority and the master has a higher priority than all other requesting masters, then the master will gain control over the slave port as soon as the data phase of the current access is completed. If the slave port is currently servicing another master of a higher priority, then the master will gain control of the slave port once the other master releases control of the slave port if no other higher priority master is also waiting for the slave port.
+
+A master access will be responded to with an error if the access decodes to a location not occupied by a slave port. This is the only time the XBAR will directly respond with an error response. All other error responses received by the master are the result of error responses on the slave ports being passed through the XBAR.
+
+## 7.3.4 Slave Ports
+
+The goal of the XBAR with respect to the slave ports is to keep them 100% saturated when masters are actively making requests. In order to do this the XBAR must not insert any bubbles onto the slave bus unless absolutely necessary.
+
+There is only one instance when the XBAR will force a bubble onto the slave bus when a master is actively making a request. This occurs when a handoff of bus ownership occurs and there are no wait states from the slave port. A requesting master which does not own the slave port will be granted access after a one clock delay.
+
+The only other time the XBAR will have control of the slave port is when no masters are making access requests to the slave port and the XBAR is forced to either park the slave port on a specific master, or place the slave port into low power park mode. In these cases, the XBAR will force IDLE for the transfer type.
+
+## 7.3.5 Priority Assignment
+
+Each master port must be assigned a unique 3 bit priority level in fixed priority mode. If multiple master ports are assigned the same priority level within a register (XBAR\_MPR) undefined behavior will result.
+
+## 7.3.6 Arbitration
+
+XBAR supports two arbitration schemes; a simple fixed-priority comparison algorithm, and a round-robin fairness algorithm. The arbitration scheme is independently programmable for each slave port.
+
+## 7.3.6.1 Fixed Priority Operation
+
+When operating in fixed-priority arbitration mode, each master is assigned a unique priority level in the XBAR\_MPR. If two masters both request access to a slave port, the master with the highest priority in the selected priority register will gain control over the slave port.
+
+Any time a master makes a request to a slave port, the slave port checks to see if the new requesting master's priority level is higher than that of the master that currently has control over the slave port (if any). The slave port does an arbitration check at every clock edge to ensure that the proper master (if any) has control of the slave port.
+
+## Crossbar Switch (XBAR)
+
+If the new requesting master's priority level is higher than that of the master that currently has control of the slave port, the higher priority master will be granted control at the termination of any currently pending access, assuming the pending transfer is not part of a burst transfer.
+
+A new requesting master must wait until the end of the fixed-length burst transfer, before it will be granted control of the slave port. But if the new requesting master's priority level is lower than that of the master that currently has control of the slave port, the new requesting master will be forced to wait until the master that currently has control of the slave port is finished accessing the current slave port.
+
+## 7.3.6.2 Round-Robin Priority Operation
+
+When operating in round-robin mode, each master is assigned a relative priority based on the master number. This relative priority is compared to the ID of the last master to perform a transfer on the slave bus. The highest priority requesting master will become owner of the slave bus at the next transfer boundary (accounting for fixed-length burst transfers). Priority is based on how far ahead the ID of the requesting master is to the ID of the last master. ID is defined by the master port number.
+
+Once granted access to a slave port, a master may perform as many transfers as desired to that port until another master makes a request to the same slave port. The next master in line will be granted access to the slave port when the current transfer is completed, or possibly on the next clock cycle if the current master has no pending access request.
+
+As an example of arbitration in round-robin mode, assume the three masters have ID's 0, 1, and 2. If the last master of the slave port was master 1, and masters 0 and 2 make simultaneous requests, they will be serviced in the order 2 and then 0 assuming no further requests are made.
+
+As another example, if master 1 is waiting on a response from a slow slave and has no further pending access to that slave, no other masters are requesting, and master 0 then makes a request, master 0's request will be granted on the next clock (assuming that master 1's transfer is not a burst transfer), and the request information for master 0 will be driven to the slave as a pending access. If master 2 were to make a request after master 0 has been granted access, but prior to master 0's access being accepted by the slave, master 0 will continue to be granted the slave port, and master 2 will be delayed until the next arbitration boundary, which occurs once the transfer is complete. The round-robin pointer will have been reset to 0, so master 1 could actually be granted the bus next if it has another request which occurs prior to the completion of master 0's transfer. This implies a worst case latency of N transfers for a system with N masters.
+
+Parking may still be used in round-robin mode, but will not affect the round-robin pointer unless the parked master actually performs a transfer. Handoff will occur to the next master in line after one cycle of arbitration.
+
+The slave port does an arbitration check at every clock edge to ensure that the proper master (if any) has control of the slave port.
+
+A new requesting master must wait until the end of the fixed-length burst transfer, before it will be granted control of the slave port. But if the new requesting master's priority level is lower than that of the master that currently has control of the slave port, the new requesting master will be forced to wait until the master that currently has control of the slave port is finished accessing the current slave port.
+
+## 7.3.6.2.1 Parking
+
+If no master is currently making a request to the slave port then the slave port will be parked. It will park in one of three places, dictated by the PCTL field in the XBAR\_SGPCR.
+
+- · If the park on specific master mode is selected, then the slave port will park on the master designated by the PARK field. The behavior here is the same as for the POL mode with the exception that a specific master will be parked on instead of the last master to access the slave port. If the master designated by the PARK field tries to access the slave port it will not pay an arbitration penalty, while any other master will pay a one clock penalty.
+- · If the park on last (POL) mode is selected, then the slave port will park on the last master to access it, passing that master's signals through to the slave bus. When that master accesses the slave port again it will not pay any arbitration penalty; however, if any other master wishes to access the slave port a one clock arbitration penalty will be imposed.
+- · If the low power park (LPP) mode is selected, then the slave port will enter low power park mode. It will not recognize any master as being in control of it and it will not select any master's signals to pass through to the slave bus. In this case all slave bus activity will effectively halt because all slave bus signals will not be toggling. This can save power if the slave port will not be in use for some time. However, when a master does make a request to the slave port it will be delayed by one clock since it will have to arbitrate to acquire ownership of the slave port.
+
+## 7.4 Revision History
+
+## Substantive Changes since Rev 3.0
+
+Changed MPR's MSTR bit descriptions to include definition for '11' instead of being Reserved.
+
+## Crossbar Switch (XBAR)
