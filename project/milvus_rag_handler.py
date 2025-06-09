@@ -92,20 +92,32 @@ class MilvusRAGHandler:
         self.config = full_config.get('milvus', {})
         self.knowledge_config = full_config.get('knowledge_base', {})
         
-        # Initialize embedding model
-        try:
-            self.embedding_model = SentenceTransformer(self.config["embedding_model"])
-            self.logger.info(f"Loaded embedding model: {self.config['embedding_model']}")
-        except Exception as e:
-            self.logger.error(f"Failed to load embedding model: {e}")
-            raise MilvusConnectionError(f"Failed to load embedding model: {e}")
+        # Initialize embedding service
+        self.embedding_service = self.config.get("embedding_service", "sentence-transformers")
+        
+        if self.embedding_service == "ollama":
+            self.ollama_endpoint = self.config["embedding_model"]
+            self.ollama_model = self.config["ollama_model"]
+            self.logger.info(f"Using Ollama embedding service with model: {self.ollama_model}")
+        else:
+            # Fallback to SentenceTransformers
+            try:
+                self.embedding_model = SentenceTransformer(self.config["embedding_model"])
+                self.logger.info(f"Loaded embedding model: {self.config['embedding_model']}")
+            except Exception as e:
+                self.logger.error(f"Failed to load embedding model: {e}")
+                raise MilvusConnectionError(f"Failed to load embedding model: {e}")
         
         # Connect to Milvus
         self._connect()
         
-        # Initialize collections
-        self.doc_collection = self._init_collection("peripheral_docs")
-        self.example_collection = self._init_collection("renode_examples")
+        # Initialize collections using names from config
+        collections_config = self.config.get("collections", {})
+        doc_collection_name = collections_config.get("peripheral_docs", "peripheral_docs")
+        example_collection_name = collections_config.get("renode_examples", "renode_examples")
+        
+        self.doc_collection = self._init_collection(doc_collection_name)
+        self.example_collection = self._init_collection(example_collection_name)
         
         # Section type priorities for ordering
         self.section_priorities = {
@@ -151,17 +163,27 @@ class MilvusRAGHandler:
             MilvusConnectionError: If collection initialization fails
         """
         try:
+            self.logger.info(f"Initializing collection: {collection_name}")
             if utility.has_collection(collection_name):
+                self.logger.info(f"Collection exists: {collection_name}")
                 collection = Collection(collection_name)
+                self.logger.info(f"Collection object created: {collection_name}")
                 collection.load()
                 self.logger.info(f"Loaded existing collection: {collection_name}")
             else:
+                self.logger.info(f"Collection does not exist, creating: {collection_name}")
                 collection = self._create_collection(collection_name)
                 self.logger.info(f"Created new collection: {collection_name}")
             
+            # Verify collection properties
+            self.logger.info(f"Collection properties: {collection.describe()}")
+            self.logger.info(f"Collection entities: {collection.num_entities}")
+            
             return collection
         except Exception as e:
-            self.logger.error(f"Failed to initialize collection {collection_name}: {e}")
+            import traceback
+            error_trace = traceback.format_exc()
+            self.logger.error(f"Failed to initialize collection {collection_name}: {error_trace}")
             raise MilvusConnectionError(f"Failed to initialize collection: {e}")
     
     def _create_collection(self, collection_name: str) -> Collection:
@@ -359,6 +381,31 @@ class MilvusRAGHandler:
         
         assembled_context = "\n".join(context_parts)
         return assembled_context, dict(sections)
+        
+    def get_collection_stats(self) -> Dict[str, Any]:
+        """Get statistics for the current collections."""
+        stats = {}
+        try:
+            # Get stats for document collection
+            stats["document_collection"] = {
+                "name": self.doc_collection.name,
+                "num_entities": self.doc_collection.num_entities,
+                "indexes": [index.to_dict() for index in self.doc_collection.indexes],
+                "schema": self.doc_collection.schema.to_dict()
+            }
+            
+            # Get stats for example collection
+            stats["example_collection"] = {
+                "name": self.example_collection.name,
+                "num_entities": self.example_collection.num_entities,
+                "indexes": [index.to_dict() for index in self.example_collection.indexes],
+                "schema": self.example_collection.schema.to_dict()
+            }
+        except Exception as e:
+            self.logger.error(f"Failed to get collection stats: {e}")
+            raise DocumentRetrievalError(f"Failed to get collection stats: {e}")
+            
+        return stats
     
     def validate_context(
         self,

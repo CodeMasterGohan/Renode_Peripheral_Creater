@@ -90,38 +90,44 @@ class RenodeModelGenerator:
             
     def _setup_logging(self):
         """Setup logging configuration."""
-        log_dir = Path(self.config.get('output', {}).get('log_directory', 'logs'))
-        log_dir.mkdir(exist_ok=True)
-        
-        log_file = log_dir / f"renode_generator_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
-        
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[
-                logging.FileHandler(log_file),
-                logging.StreamHandler(sys.stdout)
-            ]
-        )
-        
-        self.logger = logging.getLogger(__name__)
+        print("Setting up logging...")  # Debug statement
+        try:
+            log_dir = Path(self.config.get('output', {}).get('log_directory', 'logs'))
+            log_dir.mkdir(exist_ok=True)
+            
+            log_file = log_dir / f"renode_generator_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
+            print(f"Log file: {log_file}")  # Debug statement
+            
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                handlers=[
+                    logging.FileHandler(log_file),
+                    logging.StreamHandler(sys.stdout)
+                ]
+            )
+            
+            self.logger = logging.getLogger(__name__)
+            print("Logging setup complete")  # Debug statement
+        except Exception as e:
+            print(f"Error setting up logging: {e}")  # Debug statement
+            # Fallback to basic logging
+            logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+            self.logger = logging.getLogger(__name__)
         
     @property
     def milvus_handler(self) -> MilvusRAGHandler:
         """Lazy load Milvus handler."""
         if self._milvus_handler is None:
-            self._milvus_handler = MilvusRAGHandler(
-                host=self.config['milvus']['host'],
-                port=self.config['milvus']['port'],
-                collection_name=self.config['milvus']['collection_name']
-            )
+            # Pass the config path to the handler instead of individual parameters
+            self._milvus_handler = MilvusRAGHandler(self.config_path)
         return self._milvus_handler
         
     @property
     def model_manager(self) -> ModelManager:
         """Lazy load model manager."""
         if self._model_manager is None:
-            self._model_manager = ModelManager(self.config['llm'])
+            self._model_manager = ModelManager(self.config_path)
         return self._model_manager
         
     @property
@@ -444,16 +450,30 @@ class RenodeModelGenerator:
         # Test Milvus
         self.console.print("Testing Milvus connection...")
         try:
-            if self.milvus_handler.connect():
-                stats = self.milvus_handler.get_collection_stats()
+            # Handler initialization already connects to Milvus
+            handler = self.milvus_handler
+            try:
+                self.logger.debug("Getting collection stats")
+                stats = handler.get_collection_stats()
                 self.console.print(f"[green]✓ Milvus connected[/green]")
-                self.console.print(f"  Collection: {stats['collection_name']}")
-                self.console.print(f"  Documents: {stats['entity_count']}")
-            else:
-                self.console.print("[red]✗ Milvus connection failed[/red]")
+                
+                # Print document collection stats
+                doc_stats = stats["document_collection"]
+                self.console.print(f"  Document Collection: {doc_stats['name']}")
+                self.console.print(f"  Documents: {doc_stats['num_entities']}")
+                
+                # Print example collection stats
+                example_stats = stats["example_collection"]
+                self.console.print(f"  Example Collection: {example_stats['name']}")
+                self.console.print(f"  Examples: {example_stats['num_entities']}")
+                
+            except Exception as e:
+                self.logger.error(f"Failed to get collection stats: {e}", exc_info=True)
+                self.console.print(f"[red]✗ Failed to get collection stats: {e}[/red]")
         except Exception as e:
+            self.logger.error(f"Milvus error: {e}", exc_info=True)
             self.console.print(f"[red]✗ Milvus error: {e}[/red]")
-            
+        
         # Test LLM
         self.console.print("\nTesting LLM connection...")
         try:

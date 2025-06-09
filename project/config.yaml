@@ -3,32 +3,35 @@
 
 # Milvus Vector Database Configuration
 milvus:
-  host: "localhost"
+  host: "eddge-sv-clarity.sern.mil"
   port: 19530
-  embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
-  embedding_dim: 384
+  embedding_model: "nomcic-embed-text"
+  embedding_service: "ollama"
+  ollama_model: "nomic-embed-text"
+  embedding_dim: 768  # Must match model output dimension
   collections:
-    peripheral_docs: "peripheral_documentation"
-    renode_examples: "renode_code_examples"
+    peripheral_docs: "pacer_peripheral_documentation"
+    renode_examples: "pacer_renode_code_examples"
   index_params:
     metric_type: "L2"
     index_type: "IVF_FLAT"
     nlist: 128
 
 # Multi-LLM Model Configuration
-models:
+llm:
   # OpenAI API configuration
   openai_api_key: "${OPENAI_API_KEY}"
-
+  #OpenRouter AIP configuration
+  openrouter_api_key: "${OPENROUTER_API_KEY}"
   # Anthropic API configuration
   anthropic_api_key: "${ANTHROPIC_API_KEY}"
 
   # Model selection preferences
   preferences:
-    analysis: "gpt-4"
-    code_generation: "claude-3-opus"
-    testing: "gpt-4"
-    documentation: "gpt-4-turbo"
+    analysis: "deepseek/deepseek-r1-0528:free"
+    code_generation: "deepseek/deepseek-r1-0528:free"
+    testing: "deepseek/deepseek-r1-0528:free"
+    documentation: "deepseek/deepseek-r1-0528:free"
 
   # Model-specific settings
   temperature_defaults:
@@ -39,9 +42,9 @@ models:
 
   # Token limits
   max_tokens:
-    default: 4096
+    default: 8192
     code_generation: 8192
-    documentation: 6000
+    documentation: 8192
 
 # Validation Configuration
 validation:

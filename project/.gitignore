@@ -1,0 +1,74 @@
+# General operating system artifacts
+.DS_Store
+Thumbs.db
+
+# IDE and editor configurations
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+.viminfo
+
+# Dependency directories
+node_modules/
+venv/
+.venv/
+packages/
+__pycache__/
+
+# Build and output artifacts
+dist/
+target/
+build/
+*.log
+*.tmp
+*.out
+
+# Environment variables
+.env
+.env*.local
+
+# Testing and coverage reports
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+junit.xml
+
+# Compression archives
+*.zip
+*.tar.gz
+*.tgz
+
+# Python-specific exclusions
+# Byte-compiled files
+*.pyc
+*.pyo
+*.pyd
+
+# C extensions
+*.so
+
+# Distribution/packaging artifacts
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv version
+.python-version
+
+# Environments
+.env
+.venv
+env/
+
+# Static analysis and type checking
+.mypy_cache/

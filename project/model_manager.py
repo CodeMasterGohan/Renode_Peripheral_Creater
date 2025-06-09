@@ -58,6 +58,7 @@ class ModelProvider(Enum):
     GEMINI = "gemini"
     GROQ = "groq"
     OLLAMA = "ollama"
+    OPENROUTER = "openrouter"
 
 
 @dataclass
@@ -232,6 +233,125 @@ class OpenAIProvider(BaseLLMProvider):
             encoding = tiktoken.get_encoding("cl100k_base")
         
         return len(encoding.encode(text))
+
+
+class OpenRouterError(Exception):
+    """Base exception for OpenRouter errors."""
+    pass
+
+class OpenRouterConfigError(OpenRouterError):
+    """Exception for configuration errors."""
+    pass
+
+class OpenRouterRateLimitError(OpenRouterError):
+    """Exception for rate limiting errors."""
+    pass
+
+class OpenRouterAPIError(OpenRouterError):
+    """Exception for API errors."""
+    def __init__(self, message: str, status_code: Optional[int] = None):
+        super().__init__(message)
+        self.status_code = status_code
+
+class OpenRouterProvider(BaseLLMProvider):
+    """OpenRouter API provider implementation."""
+    
+    def __init__(self, api_key: Optional[str] = None):
+        """Initialize OpenRouter provider with configuration validation."""
+        api_key = api_key or os.getenv("OPENROUTER_API_KEY")
+        if not api_key:
+            raise OpenRouterConfigError("OPENROUTER_API_KEY is required but not provided")
+        
+        if not isinstance(api_key, str) or not api_key.startswith("sk-"):
+            raise OpenRouterConfigError("Invalid OPENROUTER_API_KEY format")
+            
+        super().__init__(api_key)
+        self.base_url = "https://api.openrouter.ai/v1"
+        self.client = httpx.Client(timeout=120.0)
+        self.rate_limiter = RateLimiter(60)  # OpenRouter's default rate limit
+    
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type((OpenRouterRateLimitError, httpx.TimeoutException))
+    )
+    def generate(
+        self,
+        prompt: str,
+        model: str,
+        temperature: float,
+        max_tokens: int,
+        system_prompt: Optional[str] = None,
+        response_format: Optional[str] = None,
+        **kwargs
+    ) -> str:
+        """Generate response using OpenRouter API with enhanced error handling."""
+        if not self.rate_limiter.acquire():
+            wait_time = self.rate_limiter.wait_time()
+            self.logger.warning(f"Rate limited - waiting {wait_time:.1f}s before retry")
+            raise OpenRouterRateLimitError(f"Rate limit exceeded. Try again in {wait_time:.1f} seconds")
+        
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+        
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://github.com/dso-mil/Renode_Peripheral_Creater",
+            "X-Title": "Renode Peripheral Creator"
+        }
+        
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "max_tokens": max_tokens
+        }
+        
+        if response_format == "json":
+            payload["response_format"] = {"type": "json_object"}
+        
+        try:
+            response = self.client.post(
+                f"{self.base_url}/chat/completions",
+                headers=headers,
+                json=payload,
+                timeout=120.0
+            )
+            
+            # Handle different HTTP status codes
+            if response.status_code == 429:
+                retry_after = int(response.headers.get('retry-after', 60))
+                raise OpenRouterRateLimitError(f"Rate limited. Retry after {retry_after} seconds")
+            
+            response.raise_for_status()
+            
+            try:
+                response_data = response.json()
+                return response_data["choices"][0]["message"]["content"]
+            except (json.JSONDecodeError, KeyError) as e:
+                self.logger.error(f"Failed to parse OpenRouter response: {e}")
+                raise OpenRouterAPIError("Invalid response format from OpenRouter")
+                
+        except httpx.HTTPStatusError as e:
+            error_msg = f"OpenRouter API request failed with status {e.response.status_code}"
+            self.logger.error(f"{error_msg}: {e}")
+            raise OpenRouterAPIError(error_msg, e.response.status_code)
+        except httpx.TimeoutException as e:
+            self.logger.warning(f"OpenRouter API timeout: {e}")
+            raise
+        except Exception as e:
+            self.logger.error(f"Unexpected OpenRouter API error: {e}")
+            raise OpenRouterAPIError(f"Unexpected error: {str(e)}")
+    
+    def count_tokens(self, text: str, model: str) -> int:
+        """Estimate token count using tiktoken."""
+        try:
+            encoding = tiktoken.get_encoding("cl100k_base")
+            return len(encoding.encode(text))
+        except:
+            return len(text) // 4
 
 
 class AnthropicProvider(BaseLLMProvider):
@@ -466,12 +586,20 @@ class OllamaProvider(BaseLLMProvider):
             )
             response.raise_for_status()
             
-            # Ollama returns streaming responses
+            # Ollama returns streaming responses - we need to parse each JSON line
             full_response = ""
             for line in response.text.strip().split('\n'):
                 if line:
-                    data = json.loads(line)
-                    full_response += data.get("response", "")
+                    try:
+                        data = json.loads(line)
+                        if "response" in data:
+                            full_response += data["response"]
+                        elif "error" in data:
+                            self.logger.error(f"Ollama error: {data['error']}")
+                            raise Exception(f"Ollama error: {data['error']}")
+                    except json.JSONDecodeError as e:
+                        self.logger.error(f"Failed to parse Ollama response: {e}")
+                        raise
             
             return full_response
             
@@ -567,6 +695,11 @@ class ModelManager:
             providers[ModelProvider.GROQ] = GroqProvider()
             self.logger.info("Initialized Groq provider")
         
+        # OpenRouter
+        if os.getenv("OPENROUTER_API_KEY"):
+            providers[ModelProvider.OPENROUTER] = OpenRouterProvider()
+            self.logger.info("Initialized OpenRouter provider")
+
         # Ollama (check if running)
         try:
             ollama_url = os.getenv("OLLAMA_URL", "http://localhost:11434")
@@ -659,6 +792,44 @@ class ModelManager:
                 rate_limit=1000
             )
         
+        # OpenRouter models
+        if ModelProvider.OPENROUTER in self.providers:
+            models["openrouter/anthropic/claude-3-opus"] = ModelConfig(
+                name="openrouter/anthropic/claude-3-opus",
+                provider=ModelProvider.OPENROUTER,
+                model_id="anthropic/claude-3-opus",
+                max_tokens=200000,
+                temperature_range=(0.0, 1.0),
+                cost_per_1k_tokens=0.015,
+                supports_json=False,
+                supports_functions=False,
+                rate_limit=1000
+            )
+            
+            models["openrouter/openai/gpt-4-turbo"] = ModelConfig(
+                name="openrouter/openai/gpt-4-turbo",
+                provider=ModelProvider.OPENROUTER,
+                model_id="openai/gpt-4-turbo-preview",
+                max_tokens=128000,
+                temperature_range=(0.0, 2.0),
+                cost_per_1k_tokens=0.01,
+                supports_json=True,
+                supports_functions=True,
+                rate_limit=10000
+            )
+            
+            models["openrouter/meta-llama/llama-3-70b"] = ModelConfig(
+                name="openrouter/meta-llama/llama-3-70b",
+                provider=ModelProvider.OPENROUTER,
+                model_id="meta-llama/llama-3-70b-instruct",
+                max_tokens=8192,
+                temperature_range=(0.0, 2.0),
+                cost_per_1k_tokens=0.0005,
+                supports_json=False,
+                supports_functions=False,
+                rate_limit=1000
+            )
+
         # Gemini models
         if ModelProvider.GEMINI in self.providers:
             models["gemini-pro"] = ModelConfig(
@@ -1241,7 +1412,7 @@ class ModelManager:
         log_dir.mkdir(exist_ok=True)
         log_path = log_dir / "model_usage.jsonl"
         
-        with open(log_path, 'a') as f:
+        with open(str(log_path), 'a') as f:
             f.write(json.dumps(log_entry) + '\n')
     
     def get_metrics(self) -> Dict[str, Any]:

@@ -78,14 +78,31 @@ pip install -r project/requirements.txt
    MILVUS_PORT=19530
    ```
 
-### Step 4: Start Milvus (if running locally)
+### Step 4: Configure OpenRouter (Optional)
+
+To use OpenRouter as an alternative LLM provider:
+
+1. Get an API key from [OpenRouter](https://openrouter.ai/)
+2. Add to `.env`:
+   ```env
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   ```
+3. Configure model preferences in `config.yaml`:
+   ```yaml
+   models:
+     preferences:
+       analysis: "openrouter/anthropic/claude-3-opus"
+       code_generation: "openrouter/meta-llama/llama-3-70b-instruct"
+   ```
+
+### Step 5: Start Milvus (if running locally)
 
 ```bash
 # Using Docker
 docker-compose up -d milvus
 ```
 
-### Step 5: Initialize the Knowledge Base
+### Step 6: Initialize the Knowledge Base
 
 ```bash
 cd project
@@ -193,7 +210,14 @@ See [CONFIGURATION.md](CONFIGURATION.md) for detailed configuration reference.
    - Check API key permissions and quotas
    - Try using a different LLM provider
 
-3. **Generation Timeouts**
+3. **OpenRouter Specific Issues**
+
+   - Ensure `OPENROUTER_API_KEY` is set in `.env`
+   - Verify model names in `config.yaml` match OpenRouter's model list
+   - Check OpenRouter status page for outages
+   - Some models may require accepting terms on OpenRouter website
+
+4. **Generation Timeouts**
 
    - Increase timeout values in `config.yaml`
    - Simplify your query
@@ -244,6 +268,23 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Renode](https://renode.io/) - The open-source hardware emulation framework
 - [Milvus](https://milvus.io/) - Vector database for similarity search
 - [OpenAI](https://openai.com/) & [Anthropic](https://anthropic.com/) - LLM providers
+- [OpenRouter](https://openrouter.ai/) - Unified API for multiple LLMs
+
+## OpenRouter Usage Examples
+
+### Example: Using OpenRouter Models
+
+```bash
+# Generate with specific OpenRouter model
+python main.py generate "Create timer peripheral" --model openrouter/anthropic/claude-3-opus
+```
+
+### Example: Comparing Models
+
+```bash
+# Compare outputs from different providers
+python main.py generate "Create UART peripheral" --compare openrouter/anthropic/claude-3-opus openrouter/meta-llama/llama-3-70b-instruct
+```
 
 ## 📞 Support
 
