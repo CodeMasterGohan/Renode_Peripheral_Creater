@@ -232,10 +232,16 @@ class MilvusRAGHandler:
         )
         
         # Create index for vector field
+        # NOTE: The index type is set to FLAT. This provides a brute-force, exact search
+        # that guarantees 100% recall. For the specialized and relatively small-to-medium sized
+        # knowledge base of this project, the performance is sufficient, and the guarantee of
+        # finding the absolute best match is prioritized over the speed of an Approximate
+        # Nearest Neighbor (ANN) index. If the dataset scales into the millions of vectors,
+        # consider switching to an ANN index like HNSW or IVF_FLAT for better performance.
         index_params = self.config.get("index_params", {
             "metric_type": "L2",
-            "index_type": "IVF_FLAT",
-            "params": {"nlist": 128}
+            "index_type": "FLAT",
+            "params": {} # FLAT index has no build parameters
         })
         
         collection.create_index(
@@ -611,7 +617,7 @@ class MilvusRAGHandler:
         # Build search parameters
         search_params = {
             "metric_type": "L2",
-            "params": {"nprobe": 10}
+            "params": {} # FLAT index has no search parameters
         }
         
         # Build filter expression if provided

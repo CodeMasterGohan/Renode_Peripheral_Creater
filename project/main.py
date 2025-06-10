@@ -341,7 +341,17 @@ class RenodeModelGenerator:
                 console=self.console
             ) as progress:
                 
-                # Step 1: Retrieve documentation
+                # Step 1: Check if Milvus is empty and populate if necessary
+                task = progress.add_task("Checking knowledge base...", total=100)
+                if self.milvus_handler.doc_collection.num_entities == 0:
+                    self.console.print("[yellow]Knowledge base is empty. Performing one-time indexing of documents...[/yellow]")
+                    self.console.print("[yellow]This may take a few minutes depending on the number of documents...[/yellow]")
+                    knowledge_dir = "../docs"
+                    stats = self.milvus_handler.update_knowledge_base(knowledge_dir)
+                    self.console.print(f"[green]✓ Indexing complete. Processed {stats['processed']} files, inserted {stats['inserted']} chunks.[/green]")
+                progress.update(task, completed=100)
+                
+                # Step 2: Retrieve documentation
                 task = progress.add_task("Retrieving relevant documentation...", total=100)
                 # Retrieve documentation using Milvus
                 self.logger.info(f"[MAIN_PRE_PSS] Attempting to call perform_similarity_search for query: {args.query}")
