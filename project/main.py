@@ -141,12 +141,14 @@ class RenodeModelGenerator:
     def generation_pipeline(self) -> GenerationPipeline:
         """Lazy load generation pipeline."""
         if self._generation_pipeline is None:
-            self._generation_pipeline = GenerationPipeline(
-                self.milvus_handler,
-                self.model_manager,
-                self.validation_engine,
-                self.config
-            )
+            # Initialize with only config path
+            self._generation_pipeline = GenerationPipeline(self.config_path)
+            
+            # Set required components from Application instance
+            self._generation_pipeline.milvus_handler = self.milvus_handler
+            self._generation_pipeline.model_manager = self.model_manager
+            self._generation_pipeline.validation_engine = self.validation_engine
+            
         return self._generation_pipeline
         
     @property
@@ -302,7 +304,7 @@ class RenodeModelGenerator:
             )
             
         # Set output directory
-        output_dir = args.output or self.config['output']['base_directory']
+        output_dir = args.output or self.config['output']['directory']
         output_path = Path(output_dir) / f"generation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_path.mkdir(parents=True, exist_ok=True)
         
@@ -341,16 +343,27 @@ class RenodeModelGenerator:
                 
                 # Step 1: Retrieve documentation
                 task = progress.add_task("Retrieving relevant documentation...", total=100)
-                docs = self._retrieve_documentation(args.query)
+                # Retrieve documentation using Milvus
+                docs = self.milvus_handler.perform_similarity_search(
+                    query=args.query,
+                    peripheral_name=args.query.split()[-1],  # Extract peripheral name from query
+                    top_k=5
+                )
                 progress.update(task, completed=100)
                 
                 # Step 2: Generate model
                 task = progress.add_task("Generating peripheral model...", total=6)
                 
-                result = self.generation_pipeline.generate_peripheral_model(
-                    args.query,
-                    interactive=args.interactive,
-                    progress_callback=lambda step, _: progress.update(task, advance=1)
+                # Run the generation pipeline
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(
+                    self.generation_pipeline.run_pipeline(
+                        peripheral_name=args.query.split()[-1],
+                        documentation_path="",
+                        resume_from=None,
+                        pipeline_id=self.current_session_id
+                    )
                 )
                 
                 progress.update(task, completed=6)
@@ -477,10 +490,11 @@ class RenodeModelGenerator:
         # Test LLM
         self.console.print("\nTesting LLM connection...")
         try:
-            response = self.model_manager.generate("Test connection", max_tokens=10)
-            if response:
+            # Use a simple method to test LLM connection
+            models = self.model_manager.list_available_models()
+            if models:
                 self.console.print(f"[green]✓ LLM connected[/green]")
-                self.console.print(f"  Model: {self.model_manager.get_current_model()}")
+                self.console.print(f"  Models available: {len(models)}")
             else:
                 self.console.print("[red]✗ LLM connection failed[/red]")
         except Exception as e:

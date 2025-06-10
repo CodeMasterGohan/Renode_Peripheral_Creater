@@ -11,3 +11,6 @@ jsonschema
 tenacity
 rich
 ollama
+sentence-transformers
+google-generativeai
+groq

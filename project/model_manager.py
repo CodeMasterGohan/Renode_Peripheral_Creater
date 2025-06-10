@@ -628,14 +628,14 @@ class ModelManager:
         # Load configuration
         self.config = self._load_config(config_path)
         
+        # Initialize rate limiters early
+        self.rate_limiters = {}
+        
         # Initialize providers
         self.providers = self._init_providers()
         
         # Initialize models
         self.models = self._init_models()
-        
-        # Rate limiters for each provider
-        self.rate_limiters = {}
         
         # Response cache
         self.cache = {}
@@ -1531,6 +1531,9 @@ class ModelManager:
         with self.cache_lock:
             self.cache.clear()
             self.logger.info("Response cache cleared")
+    def list_available_models(self) -> List[str]:
+        """List the names of all available models."""
+        return list(self.models.keys())
     
     def shutdown(self) -> None:
         """Shutdown model manager and cleanup resources."""

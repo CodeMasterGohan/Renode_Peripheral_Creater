@@ -5,8 +5,9 @@
 milvus:
   host: "eddge-sv-clarity.sern.mil"
   port: 19530
-  embedding_model: "nomcic-embed-text"
+  embedding_model: "nomic-embed-text"
   embedding_service: "ollama"
+  ollama_endpoint: "http://localhost:11434"  # Added missing endpoint
   ollama_model: "nomic-embed-text"
   embedding_dim: 768  # Must match model output dimension
   collections:

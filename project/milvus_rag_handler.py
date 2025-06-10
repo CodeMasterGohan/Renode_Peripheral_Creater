@@ -660,8 +660,28 @@ class MilvusRAGHandler:
         Returns:
             List of embedding vectors
         """
-        embeddings = self.embedding_model.encode(texts)
-        return embeddings.tolist()
+        if self.embedding_service == "ollama":
+            # Use Ollama embedding endpoint
+            try:
+                import requests
+                embeddings = []
+                for text in texts:
+                    response = requests.post(
+                        f"{self.config['ollama_endpoint']}/api/embeddings",
+                        json={
+                            "model": self.config["embedding_model"],
+                            "prompt": text
+                        }
+                    )
+                    response.raise_for_status()
+                    embeddings.append(response.json()["embedding"])
+                return embeddings
+            except Exception as e:
+                self.logger.error(f"Ollama embedding failed: {e}")
+                raise
+        else:
+            embeddings = self.embedding_model.encode(texts)
+            return embeddings.tolist()
     
     def _build_filter_expression(self, filters: Dict[str, Any]) -> str:
         """
