@@ -1,0 +1,8 @@
+{
+  "id": "session_20250610_111049",
+  "query": "Create a renode model for the eDMA controller",
+  "output_path": "output/generation_20250610_111049",
+  "interactive": false,
+  "start_time": "2025-06-10T11:10:49.468156",
+  "status": "in_progress"
+}

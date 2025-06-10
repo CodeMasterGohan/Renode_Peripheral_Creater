@@ -481,21 +481,35 @@ class MilvusRAGHandler:
             ContextValidationError: If validation fails and validate=True
         """
         try:
+            # Log start of retrieval with parameters
+            self.logger.info(f"Starting smart context retrieval for peripheral: {peripheral_name}, query: '{query}'")
+# Pre-check: Verify collection has documents
+            if self.doc_collection.num_entities == 0:
+                self.logger.error("Document collection is empty! Cannot retrieve documents.")
+                raise DocumentRetrievalError("Document collection is empty. Please index documents first.")
+            start_time = datetime.now()
+            
             # Step 1: Perform similarity search
-            self.logger.info(f"Starting smart context retrieval for peripheral: {peripheral_name}")
+            self.logger.info(f"[RETRIEVAL] Searching documents for peripheral: {peripheral_name}")
+            search_start = datetime.now()
             search_results = self.perform_similarity_search(
                 query=query,
                 peripheral_name=peripheral_name,
-                top_k=5  # Get top documents
+                top_k=5
             )
+            search_duration = (datetime.now() - search_start).total_seconds()
+            self.logger.info(f"[RETRIEVAL] Found {len(search_results)} documents in {search_duration:.2f}s")
             
             if not search_results:
                 # Fallback: Try without peripheral filter
-                self.logger.warning("No results with peripheral filter, trying without")
+                self.logger.warning("[RETRIEVAL] No results with peripheral filter, trying without")
+                fallback_start = datetime.now()
                 search_results = self.perform_similarity_search(
                     query=query,
                     top_k=10
                 )
+                fallback_duration = (datetime.now() - fallback_start).total_seconds()
+                self.logger.info(f"[RETRIEVAL] Fallback search found {len(search_results)} documents in {fallback_duration:.2f}s")
             
             if not search_results:
                 raise DocumentRetrievalError("No documents found for query")
