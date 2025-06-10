@@ -77,10 +77,10 @@ class RenodeModelGenerator:
                 config['milvus']['host'] = os.getenv('MILVUS_HOST')
             if os.getenv('MILVUS_PORT'):
                 config['milvus']['port'] = int(os.getenv('MILVUS_PORT'))
-            if os.getenv('OPENAI_API_KEY'):
-                config['llm']['openai_api_key'] = os.getenv('OPENAI_API_KEY')
-            if os.getenv('ANTHROPIC_API_KEY'):
-                config['llm']['anthropic_api_key'] = os.getenv('ANTHROPIC_API_KEY')
+            # if os.getenv('OPENAI_API_KEY'):  # Removed as per refactoring request
+            #     config['llm']['openai_api_key'] = os.getenv('OPENAI_API_KEY') # Removed as per refactoring request
+            # if os.getenv('ANTHROPIC_API_KEY'):  # Removed as per refactoring request
+            #     config['llm']['anthropic_api_key'] = os.getenv('ANTHROPIC_API_KEY') # Removed as per refactoring request
                 
             return config
             
@@ -304,7 +304,7 @@ class RenodeModelGenerator:
             )
             
         # Set output directory
-        output_dir = args.output or self.config['output']['directory']
+        output_dir = args.output or self.config['output']['base_directory']
         output_path = Path(output_dir) / f"generation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         output_path.mkdir(parents=True, exist_ok=True)
         
@@ -344,11 +344,13 @@ class RenodeModelGenerator:
                 # Step 1: Retrieve documentation
                 task = progress.add_task("Retrieving relevant documentation...", total=100)
                 # Retrieve documentation using Milvus
+                self.logger.info(f"[MAIN_PRE_PSS] Attempting to call perform_similarity_search for query: {args.query}")
                 docs = self.milvus_handler.perform_similarity_search(
                     query=args.query,
                     peripheral_name=args.query.split()[-1],  # Extract peripheral name from query
                     top_k=5
                 )
+                self.logger.info(f"[MAIN_POST_PSS] perform_similarity_search returned. Found {len(docs)} docs.")
                 progress.update(task, completed=100)
                 
                 # Step 2: Generate model
@@ -442,9 +444,9 @@ class RenodeModelGenerator:
             table.add_column("Status", style="yellow")
             
             for provider, model_list in models.items():
-                for model in model_list:
-                    status = "✓ Available" if model.get('available', True) else "✗ Unavailable"
-                    table.add_row(provider, model['name'], status)
+                for model_info in model_list:
+                    status = "✓ Available" if model_info.get('available', True) else "✗ Unavailable"
+                    table.add_row(provider, model_info['name'], status)
                     
             self.console.print(table)
             
@@ -598,27 +600,27 @@ class RenodeModelGenerator:
         
         provider = Prompt.ask(
             "Default LLM provider",
-            choices=['openai', 'anthropic'],
+            choices=['openrouter'], # Removed 'openai', 'anthropic' as per refactoring request
             default=config['llm']['default_provider']
         )
         config['llm']['default_provider'] = provider
         
-        if provider == 'openai':
+        if provider == 'openrouter':
             api_key = Prompt.ask(
-                "OpenAI API key",
+                "OpenRouter API key",
                 password=True,
-                default=config['llm'].get('openai_api_key', '')
+                default=config['llm'].get('openrouter_api_key', '') # Assuming openrouter_api_key might be used by openai_api_key internally
             )
-            if api_key:
-                config['llm']['openai_api_key'] = api_key
-        else:
-            api_key = Prompt.ask(
-                "Anthropic API key",
-                password=True,
-                default=config['llm'].get('anthropic_api_key', '')
-            )
-            if api_key:
-                config['llm']['anthropic_api_key'] = api_key
+            if api_key: # Retaining this logic as OpenRouter might still use an API key, potentially aliased or managed differently
+                config['llm']['openai_api_key'] = api_key # Or a more generic key name if appropriate
+        # else: # Removed Anthropic API key prompt as per refactoring request
+            # api_key = Prompt.ask(
+            #     "Anthropic API key",
+            #     password=True,
+            #     default=config['llm'].get('anthropic_api_key', '')
+            # )
+            # if api_key:
+            #     config['llm']['anthropic_api_key'] = api_key
                 
         # Output configuration
         self.console.print("\n[bold cyan]Output Configuration[/bold cyan]")
@@ -1127,10 +1129,13 @@ To add new templates, ensure they follow the established patterns and include co
         
         # LLM settings
         env_content.append("# LLM Settings")
-        if config['llm'].get('openai_api_key'):
-            env_content.append(f"OPENAI_API_KEY={config['llm']['openai_api_key']}")
-        if config['llm'].get('anthropic_api_key'):
-            env_content.append(f"ANTHROPIC_API_KEY={config['llm']['anthropic_api_key']}")
+        # if config['llm'].get('openai_api_key'): # Removed as per refactoring request
+            # env_content.append(f"OPENAI_API_KEY={config['llm']['openai_api_key']}") # Removed as per refactoring request
+        # if config['llm'].get('anthropic_api_key'): # Removed as per refactoring request
+            # env_content.append(f"ANTHROPIC_API_KEY={config['llm']['anthropic_api_key']}") # Removed as per refactoring request
+        # Retain OpenRouter key if it's used, assuming it might be stored under a generic name or openai_api_key
+        if config['llm'].get('default_provider') == 'openrouter' and config['llm'].get('openai_api_key'):
+             env_content.append(f"OPENROUTER_API_KEY={config['llm']['openai_api_key']}") # Or appropriate key name
             
         with open(env_path, 'w') as f:
             f.write('\n'.join(env_content))

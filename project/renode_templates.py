@@ -1553,56 +1553,40 @@ private void UpdateOutputs()
     // Update GPIO outputs, interrupts, etc.
 }"""
     
-    def generate_documentation_template(self,
-                                      peripheral_type: str,
-                                      description: str) -> str:
-        """
-        Generate XML documentation template.
         
-        Args:
-            peripheral_type: Type of peripheral
-            description: Description of the peripheral
-            
-        Returns:
-            Documentation template
-        """
-        return f"""/// <summary>
-/// {description}
-/// </summary>
-/// <remarks>
-/// This is a Renode implementation of a {peripheral_type} peripheral.
-/// Key features:
-/// - Register-based configuration
-/// - Interrupt support
-/// - DMA capability (if applicable)
-///
-/// Usage example:
-/// <code>
-/// machine.SystemBus.Register(peripheral, new BusRangeRegistration(0x40000000, 0x1000));
-/// </code>
-/// </remarks>"""
-
-
-# Example usage and testing
-if __name__ == "__main__":
-    templates = RenodeTemplates()
-    
-    # Example: Generate a simple GPIO controller
-    print("=== GPIO Controller Example ===")
-    print(templates.generate_using_statements("gpio"))
-    print("\n")
-    print(templates.generate_gpio_controller("CustomGPIO", 16))
-    
-    # Example: Generate register definitions
-    print("\n\n=== Register Definition Example ===")
-    reg = RegisterDefinition(
-        name="Control",
-        offset=0x00,
-        description="Control register",
-        fields=[
-            RegisterField("ENABLE", 0, 0, "Enable peripheral"),
-            RegisterField("INT_EN", 1, 1, "Enable interrupts"),
-            RegisterField("MODE", 2, 3, "Operating mode", RegisterAccess.READ_WRITE)
-        ]
-    )
-    print(templates.generate_register_definition(reg))
+    def get_all_templates(self) -> Dict[str, Dict[str, Any]]:
+        """Return a dictionary of all available templates."""
+        return {
+            "BasePeripheral": {
+                "description": "Base template for a Renode peripheral",
+                "code": self.generate_base_peripheral("BasePeripheral", "YourNamespace")
+            },
+            "GPIOController": {
+                "description": "GPIO controller with pin management",
+                "code": self.generate_gpio_controller()
+            },
+            "TimerPeripheral": {
+                "description": "Timer peripheral",
+                "code": self.generate_timer_peripheral()
+            },
+            "UARTController": {
+                "description": "UART controller",
+                "code": self.generate_uart_controller()
+            },
+            "DMAController": {
+                "description": "DMA controller",
+                "code": self.generate_dma_controller()
+            },
+            "InterruptController": {
+                "description": "Interrupt controller",
+                "code": self.generate_interrupt_controller()
+            },
+            "SPIController": {
+                "description": "SPI controller",
+                "code": self.generate_spi_controller()
+            },
+            "I2CController": {
+                "description": "I2C controller",
+                "code": self.generate_i2c_controller()
+            }
+        }

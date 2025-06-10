@@ -1,265 +1,186 @@
-# Renode Peripheral Model Generator Configuration
-# This file configures the multi-LLM pipeline, Milvus connection, and validation settings
-
-# Milvus Vector Database Configuration
-milvus:
-  host: "eddge-sv-clarity.sern.mil"
-  port: 19530
-  embedding_model: "nomic-embed-text"
-  embedding_service: "ollama"
-  ollama_endpoint: "http://localhost:11434"  # Added missing endpoint
-  ollama_model: "nomic-embed-text"
-  embedding_dim: 768  # Must match model output dimension
-  collections:
-    peripheral_docs: "pacer_peripheral_documentation"
-    renode_examples: "pacer_renode_code_examples"
-  index_params:
-    metric_type: "L2"
-    index_type: "IVF_FLAT"
-    nlist: 128
-
-# Multi-LLM Model Configuration
-llm:
-  # OpenAI API configuration
-  openai_api_key: "${OPENAI_API_KEY}"
-  #OpenRouter AIP configuration
-  openrouter_api_key: "${OPENROUTER_API_KEY}"
-  # Anthropic API configuration
-  anthropic_api_key: "${ANTHROPIC_API_KEY}"
-
-  # Model selection preferences
-  preferences:
-    analysis: "deepseek/deepseek-r1-0528:free"
-    code_generation: "deepseek/deepseek-r1-0528:free"
-    testing: "deepseek/deepseek-r1-0528:free"
-    documentation: "deepseek/deepseek-r1-0528:free"
-
-  # Model-specific settings
-  temperature_defaults:
-    analysis: 0.3
-    code_generation: 0.1
-    testing: 0.5
-    documentation: 0.7
-
-  # Token limits
-  max_tokens:
-    default: 8192
-    code_generation: 8192
-    documentation: 8192
-
-# Validation Configuration
-validation:
-  schema_directory: "validation_schemas"
-  strict_mode: true
-
-  # Validation thresholds
-  thresholds:
-    min_test_coverage: 80
-    max_complexity_score: 50
-    min_documentation_score: 70
-
-  # Code quality checks
-  code_quality:
-    check_naming_conventions: true
-    check_renode_patterns: true
-    check_error_handling: true
-    check_logging: true
-
-# Todo Processing Configuration
-todo:
-  template_directory: "todo_templates"
-
-  # Task complexity weights
-  complexity_weights:
-    analysis: 1.0
-    interface_design: 1.5
-    register_definition: 2.0
-    implementation: 3.0
-    testing: 2.5
-    documentation: 1.5
-    validation: 2.0
-
-  # Priority assignment rules
-  priority_rules:
-    critical_keywords: ["core", "essential", "required", "must"]
-    high_keywords: ["important", "should", "interrupt", "dma"]
-    medium_keywords: ["feature", "enhancement", "optional"]
-    low_keywords: ["nice-to-have", "future", "consider"]
-
-# Template Configuration
-templates:
-  template_directory: "templates"
-
-  # Peripheral type mappings
-  peripheral_types:
-    uart: "UART"
-    spi: "SPI"
-    i2c: "I2C"
-    gpio: "GPIO"
-    timer: "Timer"
-    adc: "ADC"
-    dac: "DAC"
-    can: "CAN"
-    ethernet: "Ethernet"
-
-  # Code style preferences
-  code_style:
-    indent_size: 4
-    use_spaces: true
-    max_line_length: 120
-    brace_style: "next_line"
-
-# Output Configuration
-output:
-  directory: "output"
-
-  # File naming patterns
-  naming:
-    implementation: "{peripheral_name}.cs"
-    tests: "{peripheral_name}Tests.cs"
-    documentation: "{peripheral_name}_README.md"
-    validation_report: "{peripheral_name}_validation.json"
-
-  # Output organization
-  organize_by_date: true
-  create_project_structure: true
-
-# Pipeline Configuration
-pipeline:
-  # Step timeouts (seconds)
-  timeouts:
-    context_gathering: 60
-    todo_generation: 45
-    interface_definition: 60
-    implementation: 120
-    test_generation: 90
-    final_assembly: 30
-
-  # Retry settings
-  retry:
-    max_attempts: 3
-    backoff_multiplier: 2
-    initial_delay: 5
-
-  # Parallel execution
-  parallel:
-    enabled: false
-    max_workers: 4
-
-# Logging Configuration
-logging:
-  level: "INFO"
-
-  # Log file settings
-  file:
-    enabled: true
-    path: "logs/generator.log"
-    max_size: "10MB"
-    backup_count: 5
-
-  # Console output
-  console:
-    enabled: true
-    colored: true
-
-  # Performance logging
-  performance:
-    log_llm_calls: true
-    log_token_usage: true
-    log_response_times: true
-
-# Knowledge Base Configuration
-knowledge_base:
-  # Built-in knowledge directory
-  renode_knowledge_dir: "renode_knowledge"
-
-  # Auto-update settings
-  auto_update:
-    enabled: true
-    check_interval: 86400 # 24 hours
-    sources:
-      - url: "https://github.com/renode/renode"
-        type: "git"
-        paths: ["src/Infrastructure/src/Emulator/Peripherals"]
-
-  # Knowledge indexing
-  indexing:
-    chunk_size: 1000
-    chunk_overlap: 200
-    metadata_extraction: true
-
-# Accuracy Framework Configuration
 accuracy:
-  # Accuracy tracking
-  tracking:
+  feedback:
+    collection_method: automatic
     enabled: true
-    metrics_file: "logs/accuracy_metrics.json"
-
-  # Accuracy thresholds for model selection
+    improvement_threshold: 0.1
   model_thresholds:
     minimum_accuracy: 0.7
     preferred_accuracy: 0.85
-
-  # Feedback loop
-  feedback:
+  tracking:
     enabled: true
-    collection_method: "automatic"
-    improvement_threshold: 0.1
-
-# Development Settings
-development:
-  # Debug mode
-  debug: false
-
-  # Dry run mode (no actual generation)
-  dry_run: false
-
-  # Save intermediate results
-  save_intermediates: true
-  intermediates_dir: "debug/intermediates"
-
-  # Profiling
-  profiling:
-    enabled: false
-    output_file: "debug/profile.stats"
-
-# Cache Configuration
+    metrics_file: logs/accuracy_metrics.json
 cache:
-  # Response caching
+  embedding_cache:
+    directory: cache/embeddings
+    enabled: true
+    max_size: 1GB
   response_cache:
     enabled: true
     max_size: 1000
-    ttl: 3600 # 1 hour
-
-  # Embedding cache
-  embedding_cache:
-    enabled: true
-    directory: "cache/embeddings"
-    max_size: "1GB"
-
-# Integration Settings
-integrations:
-  # Version control integration
-  git:
+    ttl: 3600
+development:
+  debug: false
+  dry_run: false
+  intermediates_dir: debug/intermediates
+  profiling:
     enabled: false
-    auto_commit: false
-    commit_message_template: "Generated {peripheral_name} peripheral model"
-
-  # CI/CD integration
+    output_file: debug/profile.stats
+  save_intermediates: true
+integrations:
   ci:
     enabled: false
     trigger_tests: true
-    webhook_url: ""
-
-# Security Settings
+    webhook_url: ''
+  git:
+    auto_commit: false
+    commit_message_template: Generated {peripheral_name} peripheral model
+    enabled: false
+knowledge_base:
+  auto_update:
+    check_interval: 86400
+    enabled: true
+    sources:
+    - paths:
+      - src/Infrastructure/src/Emulator/Peripherals
+      type: git
+      url: https://github.com/renode/renode
+  indexing:
+    chunk_overlap: 200
+    chunk_size: 1000
+    metadata_extraction: true
+  renode_knowledge_dir: renode_knowledge
+llm:
+  default_provider: openrouter
+  max_tokens:
+    code_generation: 8192
+    default: 8192
+    documentation: 8192
+  openai_api_key: ${OPENROUTER_API_KEY}
+  openrouter_api_key: ${OPENROUTER_API_KEY}
+  preferences:
+    analysis: openrouter/deepseek/deepseek-r1-0528:free
+    code_generation: openrouter/deepseek/deepseek-r1-0528:free
+    documentation: openrouter/deepseek/deepseek-r1-0528:free
+    testing: openrouter/deepseek/deepseek-r1-0528:free
+  temperature_defaults:
+    analysis: 0.3
+    code_generation: 0.1
+    documentation: 0.7
+    testing: 0.5
+logging:
+  console:
+    colored: true
+    enabled: true
+  file:
+    backup_count: 5
+    enabled: true
+    max_size: 10MB
+    path: logs/generator.log
+  level: INFO
+  performance:
+    log_llm_calls: true
+    log_response_times: true
+    log_token_usage: true
+milvus:
+  collections:
+    peripheral_docs: pacer_peripheral_documentation
+    renode_examples: pacer_renode_code_examples
+  embedding_dim: 768
+  embedding_model: nomic-embed-text
+  embedding_service: ollama
+  host: eddge-sv-clarity.sern.mil
+  index_params:
+    index_type: IVF_FLAT
+    metric_type: L2
+    nlist: 128
+  ollama_endpoint: http://localhost:11434
+  ollama_model: nomic-embed-text
+  port: 19530
+output:
+  base_directory: output
+  create_project_structure: true
+  naming:
+    documentation: '{peripheral_name}_README.md'
+    implementation: '{peripheral_name}.cs'
+    tests: '{peripheral_name}Tests.cs'
+    validation_report: '{peripheral_name}_validation.json'
+  organize_by_date: true
+pipeline:
+  parallel:
+    enabled: false
+    max_workers: 4
+  retry:
+    backoff_multiplier: 2
+    initial_delay: 5
+    max_attempts: 3
+  timeouts:
+    context_gathering: 60
+    final_assembly: 30
+    implementation: 120
+    interface_definition: 60
+    test_generation: 90
+    todo_generation: 45
 security:
-  # API key encryption
   encrypt_api_keys: false
-
-  # Input validation
-  validate_inputs: true
   max_input_length: 100000
-
-  # Output sanitization
-  sanitize_outputs: true
   remove_sensitive_data: true
+  sanitize_outputs: true
+  validate_inputs: true
+templates:
+  code_style:
+    brace_style: next_line
+    indent_size: 4
+    max_line_length: 120
+    use_spaces: true
+  peripheral_types:
+    adc: ADC
+    can: CAN
+    dac: DAC
+    ethernet: Ethernet
+    gpio: GPIO
+    i2c: I2C
+    spi: SPI
+    timer: Timer
+    uart: UART
+  template_directory: templates
+todo:
+  complexity_weights:
+    analysis: 1.0
+    documentation: 1.5
+    implementation: 3.0
+    interface_design: 1.5
+    register_definition: 2.0
+    testing: 2.5
+    validation: 2.0
+  priority_rules:
+    critical_keywords:
+    - core
+    - essential
+    - required
+    - must
+    high_keywords:
+    - important
+    - should
+    - interrupt
+    - dma
+    low_keywords:
+    - nice-to-have
+    - future
+    - consider
+    medium_keywords:
+    - feature
+    - enhancement
+    - optional
+  template_directory: todo_templates
+validation:
+  code_quality:
+    check_error_handling: true
+    check_logging: true
+    check_naming_conventions: true
+    check_renode_patterns: true
+  schema_directory: validation_schemas
+  strict_mode: true
+  thresholds:
+    max_complexity_score: 50
+    min_documentation_score: 70
+    min_test_coverage: 80

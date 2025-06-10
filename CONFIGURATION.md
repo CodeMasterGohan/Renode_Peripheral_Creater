@@ -43,9 +43,8 @@ Environment variables can override configuration file settings. Create a `.env` 
 ### Required Variables
 
 ```env
-# LLM API Keys (at least one required)
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
+# LLM API Key (OpenRouter is the primary key)
+OPENROUTER_API_KEY=sk-or-... # This is now the primary API key required for external LLMs.
 
 # Milvus Connection
 MILVUS_HOST=localhost
@@ -127,8 +126,7 @@ Configure multiple LLM providers for different tasks:
 
 ```yaml
 models:
-  openai_api_key: "${OPENAI_API_KEY}"
-  anthropic_api_key: "${ANTHROPIC_API_KEY}"
+  openrouter_api_key: "${OPENROUTER_API_KEY}" # Primary API key for LLM access
 ```
 
 ### Model Selection
@@ -163,15 +161,17 @@ models:
 ```yaml
 models:
   providers:
-    openai:
-      base_url: "https://api.openai.com/v1"
-      organization: "org-..." # Optional
-      retry_attempts: 3
-
-    anthropic:
-      base_url: "https://api.anthropic.com/v1"
-      version: "2023-06-01"
-      retry_attempts: 3
+    # Configuration for specific providers like OpenAI and Anthropic, including their
+    # base URLs and other direct settings, is no longer required here when using
+    # OPENROUTER_API_KEY as the primary method for accessing external LLMs.
+    # OpenRouter handles the routing to various models (like those from OpenAI,
+    # Anthropic, etc.) using the single OPENROUTER_API_KEY.
+    #
+    # Model preferences (e.g., "gpt-4", "claude-3-opus") can still be specified
+    # in the 'models.preferences' section and will be accessed via OpenRouter.
+    #
+    # If you need to pass provider-specific parameters through OpenRouter,
+    # please refer to the OpenRouter documentation for the correct format and capabilities.
 ```
 
 ## Validation Settings
@@ -398,8 +398,8 @@ The system validates configuration on startup. Common validation errors:
 ### Missing Required Fields
 
 ```
-Error: Missing required configuration field: models.openai_api_key
-Solution: Add OPENAI_API_KEY to your .env file
+Error: Missing required configuration field: models.openrouter_api_key
+Solution: Add OPENROUTER_API_KEY to your .env file
 ```
 
 ### Invalid Values
@@ -462,7 +462,7 @@ python main.py validate-config
    ls -la project/.env
 
    # Verify variable is set
-   echo $OPENAI_API_KEY
+   echo $OPENROUTER_API_KEY
    ```
 
 2. **YAML Syntax Errors**
@@ -490,7 +490,7 @@ milvus:
   port: 19530
 
 models:
-  openai_api_key: "${OPENAI_API_KEY}"
+  openrouter_api_key: "${OPENROUTER_API_KEY}" # Primary API key
 ```
 
 ### Production Configuration

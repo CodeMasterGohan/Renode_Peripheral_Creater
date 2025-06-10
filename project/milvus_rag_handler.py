@@ -96,14 +96,31 @@ class MilvusRAGHandler:
         self.embedding_service = self.config.get("embedding_service", "sentence-transformers")
         
         if self.embedding_service == "ollama":
-            self.ollama_endpoint = self.config["embedding_model"]
-            self.ollama_model = self.config["ollama_model"]
-            self.logger.info(f"Using Ollama embedding service with model: {self.ollama_model}")
+            self.ollama_endpoint = self.config.get("ollama_endpoint", "http://localhost:11434") # Corrected initialization
+            self.ollama_model = self.config.get("ollama_model", "nomic-embed-text") # Added get with default
+            self.logger.info(f"Using Ollama embedding service with model: {self.ollama_model} at endpoint: {self.ollama_endpoint}")
         else:
             # Fallback to SentenceTransformers
             try:
+                # Disable SSL verification for model download
+                import requests
+                from functools import partial
+                from sentence_transformers import util
+                
+                # Create a session that doesn't verify SSL
+                session = requests.Session()
+                session.verify = False
+                
+                # Monkey patch the download function to use our unverified session
+                original_download = util.http_get
+                util.http_get = partial(original_download, session=session)
+                
+                # Now load the model
                 self.embedding_model = SentenceTransformer(self.config["embedding_model"])
                 self.logger.info(f"Loaded embedding model: {self.config['embedding_model']}")
+                
+                # Restore original download function
+                util.http_get = original_download
             except Exception as e:
                 self.logger.error(f"Failed to load embedding model: {e}")
                 raise MilvusConnectionError(f"Failed to load embedding model: {e}")
@@ -252,6 +269,7 @@ class MilvusRAGHandler:
         Raises:
             DocumentRetrievalError: If search fails
         """
+        self.logger.info(f"[PSS_ENTRY] Entered perform_similarity_search for query: {query}, peripheral: {peripheral_name}")
         try:
             # Build metadata filters
             filters = {}
@@ -259,8 +277,8 @@ class MilvusRAGHandler:
                 filters["peripheral_name"] = peripheral_name
             if section_type:
                 filters["section_type"] = section_type
+            self.logger.info(f"[PSS_PRE_SEARCH_DOCS] Filters built: {filters}. Attempting to call search_documents.")
             
-            # Perform search
             results = self.search_documents(
                 query=query,
                 top_k=top_k,
@@ -268,11 +286,11 @@ class MilvusRAGHandler:
                 collection_name="peripheral_docs"
             )
             
-            self.logger.info(f"Found {len(results)} documents for query: {query}")
+            self.logger.info(f"[PSS_POST_SEARCH_DOCS] search_documents returned. Found {len(results)} documents for query: {query}")
             return results
             
         except Exception as e:
-            self.logger.error(f"Similarity search failed: {e}")
+            self.logger.error(f"[PSS_EXCEPTION] Similarity search failed: {e}", exc_info=True)
             raise DocumentRetrievalError(f"Similarity search failed: {e}")
     
     def retrieve_all_chunks(
@@ -481,12 +499,13 @@ class MilvusRAGHandler:
             ContextValidationError: If validation fails and validate=True
         """
         try:
+            # Pre-check: Verify collection has documents
+            if self.doc_collection.num_entities == 0:
+                self.logger.error(f"Document collection '{self.doc_collection.name}' is empty! Cannot retrieve documents.")
+                raise DocumentRetrievalError("Document collection is empty. Please index documents first.")
+            
             # Log start of retrieval with parameters
             self.logger.info(f"Starting smart context retrieval for peripheral: {peripheral_name}, query: '{query}'")
-# Pre-check: Verify collection has documents
-            if self.doc_collection.num_entities == 0:
-                self.logger.error("Document collection is empty! Cannot retrieve documents.")
-                raise DocumentRetrievalError("Document collection is empty. Please index documents first.")
             start_time = datetime.now()
             
             # Step 1: Perform similarity search
@@ -585,7 +604,9 @@ class MilvusRAGHandler:
         collection = self.doc_collection if collection_name == "peripheral_docs" else self.example_collection
         
         # Generate query embedding
+        self.logger.debug(f"Generating embedding for query: {query}")
         query_embedding = self._generate_embeddings([query])[0]
+        self.logger.debug(f"Embedding generated for query: {query}")
         
         # Build search parameters
         search_params = {
@@ -597,14 +618,17 @@ class MilvusRAGHandler:
         expr = self._build_filter_expression(filters) if filters else None
         
         # Perform search
+        self.logger.debug(f"Searching collection {collection.name} with expr: {expr}")
         results = collection.search(
             data=[query_embedding],
             anns_field="embedding",
             param=search_params,
             limit=top_k,
             expr=expr,
-            output_fields=["content", "metadata"]
+            output_fields=["content", "metadata"],
+            timeout=self.config.get("milvus_search_timeout", 30.0) # Added timeout for Milvus search
         )
+        self.logger.debug(f"Search completed on {collection.name}. Found {len(results[0]) if results else 0} hits.")
         
         # Format results
         documents = []
@@ -674,27 +698,43 @@ class MilvusRAGHandler:
         Returns:
             List of embedding vectors
         """
+        self.logger.info(f"[_generate_embeddings_ENTRY] Called for {len(texts)} texts. Service: {self.embedding_service}")
         if self.embedding_service == "ollama":
             # Use Ollama embedding endpoint
             try:
-                import requests
+                import requests # Keep import here to ensure it's attempted
+                self.logger.info(f"[_generate_embeddings_OLLAMA_TRY] Attempting Ollama embedding.")
                 embeddings = []
-                for text in texts:
+                for i, text in enumerate(texts):
+                    self.logger.info(f"[_generate_embeddings_OLLAMA_LOOP_START] Processing text {i+1}/{len(texts)} (first 50 chars): {text[:50]}...")
+                    payload = {
+                        "model": self.config.get("ollama_model", self.ollama_model),
+                        "prompt": text
+                    }
+                    ollama_request_timeout = self.config.get("ollama_request_timeout", 60.0)
+                    self.logger.info(f"[_generate_embeddings_OLLAMA_PRE_POST] Ollama request payload: {payload}, timeout: {ollama_request_timeout}s to endpoint: {self.config.get('ollama_endpoint', self.ollama_endpoint)}")
                     response = requests.post(
-                        f"{self.config['ollama_endpoint']}/api/embeddings",
-                        json={
-                            "model": self.config["embedding_model"],
-                            "prompt": text
-                        }
+                        f"{self.config.get('ollama_endpoint', self.ollama_endpoint)}/api/embeddings",
+                        json=payload,
+                        timeout=ollama_request_timeout
                     )
+                    self.logger.info(f"[_generate_embeddings_OLLAMA_POST_POST] Ollama response status: {response.status_code}")
                     response.raise_for_status()
-                    embeddings.append(response.json()["embedding"])
+                    embedding_data = response.json()["embedding"]
+                    embeddings.append(embedding_data)
+                    self.logger.info(f"[_generate_embeddings_OLLAMA_LOOP_END] Ollama embedding received for text {i+1}/{len(texts)}.")
+                self.logger.info(f"[_generate_embeddings_OLLAMA_SUCCESS] Ollama embeddings generated for {len(texts)} texts.")
                 return embeddings
+            except requests.exceptions.Timeout:
+                self.logger.error(f"[_generate_embeddings_OLLAMA_TIMEOUT] Ollama request timed out after {ollama_request_timeout} seconds.", exc_info=True)
+                raise # Re-raise the timeout exception
             except Exception as e:
-                self.logger.error(f"Ollama embedding failed: {e}")
+                self.logger.error(f"[_generate_embeddings_OLLAMA_EXCEPTION] Ollama embedding failed: {e}", exc_info=True)
                 raise
         else:
+            self.logger.info(f"[_generate_embeddings_SENTENCE_TRANSFORMERS] Using SentenceTransformers.")
             embeddings = self.embedding_model.encode(texts)
+            self.logger.info(f"[_generate_embeddings_SENTENCE_TRANSFORMERS_SUCCESS] SentenceTransformers embeddings generated.")
             return embeddings.tolist()
     
     def _build_filter_expression(self, filters: Dict[str, Any]) -> str:
@@ -730,43 +770,65 @@ class MilvusRAGHandler:
             Statistics about updated documents
         """
         knowledge_path = Path(knowledge_dir)
-        stats = {"processed": 0, "inserted": 0, "errors": 0}
+        stats = {"processed": 0, "inserted": 0, "errors": 0, "code_examples": 0, "docs": 0}
         
         # Get chunking parameters from config
         chunk_size = self.knowledge_config.get("indexing", {}).get("chunk_size", 1000)
         chunk_overlap = self.knowledge_config.get("indexing", {}).get("chunk_overlap", 200)
         
-        for file_path in knowledge_path.rglob("*.md"):
+        for file_path in knowledge_path.rglob("*.*"):
+            if file_path.suffix.lower() not in [".md", ".cs"]:
+                continue
+                
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                # Extract metadata from file
-                peripheral_name = self._extract_peripheral_name(file_path)
-                section_type = self._extract_section_type(content)
-                
-                # Chunk the document
-                chunks = self._chunk_document(content, chunk_size, chunk_overlap)
-                
-                # Prepare documents for insertion
                 documents = []
-                for i, chunk in enumerate(chunks):
+                collection_name = "peripheral_docs"
+                
+                if file_path.suffix.lower() == ".cs":
+                    # Process C# code examples as single documents
                     metadata = {
                         "source": str(file_path),
                         "filename": file_path.name,
-                        "peripheral_name": peripheral_name,
-                        "section_type": section_type,
-                        "position": i,
-                        "total_chunks": len(chunks)
+                        "title": file_path.stem,
+                        "type": "code_example"
                     }
                     
                     documents.append({
-                        "content": chunk,
+                        "content": content,
                         "metadata": metadata
                     })
+                    collection_name = "renode_examples"
+                    stats["code_examples"] += 1
+                    
+                else:  # .md files
+                    # Extract metadata from file
+                    peripheral_name = self._extract_peripheral_name(file_path)
+                    section_type = self._extract_section_type(content)
+                    
+                    # Chunk the document
+                    chunks = self._chunk_document(content, chunk_size, chunk_overlap)
+                    
+                    for i, chunk in enumerate(chunks):
+                        metadata = {
+                            "source": str(file_path),
+                            "filename": file_path.name,
+                            "peripheral_name": peripheral_name,
+                            "section_type": section_type,
+                            "position": i,
+                            "total_chunks": len(chunks)
+                        }
+                        
+                        documents.append({
+                            "content": chunk,
+                            "metadata": metadata
+                        })
+                    stats["docs"] += 1
                 
-                # Insert documents
-                self.insert_documents(documents)
+                # Insert documents into appropriate collection
+                self.insert_documents(documents, collection_name=collection_name)
                 
                 stats["processed"] += 1
                 stats["inserted"] += len(documents)

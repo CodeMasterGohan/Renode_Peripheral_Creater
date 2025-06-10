@@ -37,8 +37,7 @@ from threading import Lock
 import yaml
 
 # Third-party imports
-import openai
-import anthropic
+
 import google.generativeai as genai
 from groq import Groq
 import httpx
@@ -53,8 +52,7 @@ load_dotenv()
 
 class ModelProvider(Enum):
     """Supported LLM providers."""
-    OPENAI = "openai"
-    ANTHROPIC = "anthropic"
+    
     GEMINI = "gemini"
     GROQ = "groq"
     OLLAMA = "ollama"
@@ -180,59 +178,7 @@ class BaseLLMProvider(ABC):
         return bool(response.strip())
 
 
-class OpenAIProvider(BaseLLMProvider):
-    """OpenAI API provider implementation."""
-    
-    def __init__(self, api_key: Optional[str] = None):
-        """Initialize OpenAI provider."""
-        super().__init__(api_key or os.getenv("OPENAI_API_KEY"))
-        self.client = openai.OpenAI(api_key=self.api_key)
-    
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((openai.RateLimitError, openai.APITimeoutError))
-    )
-    def generate(
-        self,
-        prompt: str,
-        model: str,
-        temperature: float,
-        max_tokens: int,
-        system_prompt: Optional[str] = None,
-        response_format: Optional[str] = None,
-        **kwargs
-    ) -> str:
-        """Generate response using OpenAI API."""
-        messages = []
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-        messages.append({"role": "user", "content": prompt})
-        
-        params = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens
-        }
-        
-        if response_format == "json":
-            params["response_format"] = {"type": "json_object"}
-        
-        # Add any additional parameters
-        params.update(kwargs)
-        
-        response = self.client.chat.completions.create(**params)
-        return response.choices[0].message.content
-    
-    def count_tokens(self, text: str, model: str) -> int:
-        """Count tokens using tiktoken."""
-        try:
-            encoding = tiktoken.encoding_for_model(model)
-        except KeyError:
-            encoding = tiktoken.get_encoding("cl100k_base")
-        
-        return len(encoding.encode(text))
+
 
 
 class OpenRouterError(Exception):
@@ -354,62 +300,7 @@ class OpenRouterProvider(BaseLLMProvider):
             return len(text) // 4
 
 
-class AnthropicProvider(BaseLLMProvider):
-    """Anthropic API provider implementation."""
-    
-    def __init__(self, api_key: Optional[str] = None):
-        """Initialize Anthropic provider."""
-        super().__init__(api_key or os.getenv("ANTHROPIC_API_KEY"))
-        self.client = anthropic.Anthropic(api_key=self.api_key)
-    
-    @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=4, max=10),
-        retry=retry_if_exception_type((anthropic.RateLimitError, anthropic.APITimeoutError))
-    )
-    def generate(
-        self,
-        prompt: str,
-        model: str,
-        temperature: float,
-        max_tokens: int,
-        system_prompt: Optional[str] = None,
-        response_format: Optional[str] = None,
-        **kwargs
-    ) -> str:
-        """Generate response using Anthropic API."""
-        messages = [{"role": "user", "content": prompt}]
-        
-        params = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-            "max_tokens": max_tokens
-        }
-        
-        if system_prompt:
-            params["system"] = system_prompt
-        
-        response = self.client.messages.create(**params)
-        content = response.content[0].text
-        
-        # Handle JSON format request
-        if response_format == "json":
-            # Try to extract JSON from response
-            json_match = re.search(r'\{.*\}', content, re.DOTALL)
-            if json_match:
-                try:
-                    json.loads(json_match.group())
-                    content = json_match.group()
-                except json.JSONDecodeError:
-                    pass
-        
-        return content
-    
-    def count_tokens(self, text: str, model: str) -> int:
-        """Estimate token count for Anthropic models."""
-        # Rough estimation: 1 token ≈ 4 characters
-        return len(text) // 4
+
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -675,16 +566,6 @@ class ModelManager:
         """Initialize LLM providers."""
         providers = {}
         
-        # OpenAI
-        if os.getenv("OPENAI_API_KEY"):
-            providers[ModelProvider.OPENAI] = OpenAIProvider()
-            self.logger.info("Initialized OpenAI provider")
-        
-        # Anthropic
-        if os.getenv("ANTHROPIC_API_KEY"):
-            providers[ModelProvider.ANTHROPIC] = AnthropicProvider()
-            self.logger.info("Initialized Anthropic provider")
-        
         # Gemini
         if os.getenv("GEMINI_API_KEY"):
             providers[ModelProvider.GEMINI] = GeminiProvider()
@@ -715,82 +596,6 @@ class ModelManager:
     def _init_models(self) -> Dict[str, ModelConfig]:
         """Initialize model configurations."""
         models = {}
-        
-        # OpenAI models
-        if ModelProvider.OPENAI in self.providers:
-            models["gpt-4"] = ModelConfig(
-                name="gpt-4",
-                provider=ModelProvider.OPENAI,
-                model_id="gpt-4",
-                max_tokens=8192,
-                temperature_range=(0.0, 2.0),
-                cost_per_1k_tokens=0.03,
-                supports_json=True,
-                supports_functions=True,
-                rate_limit=10000
-            )
-            
-            models["gpt-4-turbo"] = ModelConfig(
-                name="gpt-4-turbo",
-                provider=ModelProvider.OPENAI,
-                model_id="gpt-4-turbo-preview",
-                max_tokens=128000,
-                temperature_range=(0.0, 2.0),
-                cost_per_1k_tokens=0.01,
-                supports_json=True,
-                supports_functions=True,
-                rate_limit=10000
-            )
-            
-            models["gpt-3.5-turbo"] = ModelConfig(
-                name="gpt-3.5-turbo",
-                provider=ModelProvider.OPENAI,
-                model_id="gpt-3.5-turbo",
-                max_tokens=16384,
-                temperature_range=(0.0, 2.0),
-                cost_per_1k_tokens=0.001,
-                supports_json=True,
-                supports_functions=True,
-                rate_limit=10000
-            )
-        
-        # Anthropic models
-        if ModelProvider.ANTHROPIC in self.providers:
-            models["claude-3-opus"] = ModelConfig(
-                name="claude-3-opus",
-                provider=ModelProvider.ANTHROPIC,
-                model_id="claude-3-opus-20240229",
-                max_tokens=200000,
-                temperature_range=(0.0, 1.0),
-                cost_per_1k_tokens=0.015,
-                supports_json=False,
-                supports_functions=False,
-                rate_limit=1000
-            )
-            
-            models["claude-3-sonnet"] = ModelConfig(
-                name="claude-3-sonnet",
-                provider=ModelProvider.ANTHROPIC,
-                model_id="claude-3-sonnet-20240229",
-                max_tokens=200000,
-                temperature_range=(0.0, 1.0),
-                cost_per_1k_tokens=0.003,
-                supports_json=False,
-                supports_functions=False,
-                rate_limit=1000
-            )
-            
-            models["claude-3-haiku"] = ModelConfig(
-                name="claude-3-haiku",
-                provider=ModelProvider.ANTHROPIC,
-                model_id="claude-3-haiku-20240307",
-                max_tokens=200000,
-                temperature_range=(0.0, 1.0),
-                cost_per_1k_tokens=0.00025,
-                supports_json=False,
-                supports_functions=False,
-                rate_limit=1000
-            )
         
         # OpenRouter models
         if ModelProvider.OPENROUTER in self.providers:
@@ -1309,14 +1114,11 @@ class ModelManager:
         """Get default model based on availability."""
         # Priority order
         priority = [
-            "gpt-4",
-            "claude-3-opus",
-            "gpt-4-turbo",
-            "claude-3-sonnet",
+            "openrouter/anthropic/claude-3-opus",
+            "openrouter/openai/gpt-4-turbo",
+            "openrouter/meta-llama/llama-3-70b",
             "gemini-pro",
-            "mixtral-8x7b",
-            "gpt-3.5-turbo",
-            "claude-3-haiku"
+            "mixtral-8x7b"
         ]
         
         for model in priority:
@@ -1531,9 +1333,19 @@ class ModelManager:
         with self.cache_lock:
             self.cache.clear()
             self.logger.info("Response cache cleared")
-    def list_available_models(self) -> List[str]:
-        """List the names of all available models."""
-        return list(self.models.keys())
+    def list_available_models(self) -> Dict[str, List[Dict[str, Any]]]:
+        """List available models grouped by provider."""
+        provider_models = defaultdict(list)
+        for name, config in self.models.items():
+            provider_models[config.provider.value].append({
+                "name": name,
+                "available": True  # Assume all configured models are available
+            })
+        return dict(provider_models)
+        
+    def get_current_model(self) -> str:
+        """Get the name of the current default model."""
+        return self._get_default_model()
     
     def shutdown(self) -> None:
         """Shutdown model manager and cleanup resources."""

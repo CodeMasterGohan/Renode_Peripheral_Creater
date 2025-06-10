@@ -4,8 +4,6 @@ python-dotenv
 pyyaml
 pymilvus
 milvus
-openai
-anthropic
 tiktoken
 jsonschema
 tenacity
@@ -14,3 +12,4 @@ ollama
 sentence-transformers
 google-generativeai
 groq
+numpy

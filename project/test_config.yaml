@@ -1,0 +1,13 @@
+milvus:
+  host: localhost
+  port: 19530
+  embedding_service: dummy
+  embedding_dim: 128
+  collections:
+    peripheral_docs: peripheral_docs
+    renode_examples: renode_examples
+
+knowledge_base:
+  indexing:
+    chunk_size: 1000
+    chunk_overlap: 200
