@@ -83,7 +83,6 @@ Configure the Milvus vector database for documentation retrieval:
 milvus:
   host: "localhost" # Milvus server host
   port: 19530 # Milvus server port
-  embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
   embedding_dim: 384 # Must match embedding model output
 ```
 
