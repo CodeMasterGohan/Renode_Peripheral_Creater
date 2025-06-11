@@ -1,0 +1,210 @@
+[
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)"
+    ],
+    "chunk_type": "text",
+    "content": ""
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-1-introduction",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.1 Introduction"
+    ],
+    "chunk_type": "text",
+    "content": ""
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-1-1-block-diagram",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.1.1 Block Diagram"
+    ],
+    "chunk_type": "text",
+    "content": "The internal SRAM block diagram is shown in Figure 15-1\n\nFigure 15-1. Internal SRAM Block Diagram\n\n<!-- image -->"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-1-2-overview",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.1.2 Overview"
+    ],
+    "chunk_type": "text",
+    "content": "The SRAM provides 64 Kbytes of general-purpose system SRAM. The first 32-Kbyte block of the SRAM is powered by its own power supply pin for standby operation."
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-1-3-features",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.1.3 Features"
+    ],
+    "chunk_type": "list",
+    "content": "The SRAM controller includes the following features:\n\n- \u00b7 Supports read/write accesses mapped to the SRAM memory from any master\n- \u00b7 32-Kbyte block powered by separate supply for standby operation\n- \u00b7 Byte, halfword, word, and doubleword addressable\n- \u00b7 ECC performs single bit correction, double bit error detection"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-2-external-signal-description",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.2 External Signal Description"
+    ],
+    "chunk_type": "text",
+    "content": "The only external signal used by the SRAM is the V STBY  RAM power supply. If not used,   V STBY  is tied toV SS ."
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-3-memory-map-register-definition",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.3 Memory Map/Register Definition"
+    ],
+    "chunk_type": "text",
+    "content": "The SRAM occupies 64 Kbytes of address space. See Table 1-3.\n\nTable 15-1 shows the SRAM memory map."
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-table-15-1-sram-memory-map",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "Table 15-1. SRAM Memory Map"
+    ],
+    "chunk_type": "text",
+    "content": "| Address            | Register Name   | Register Description            | Size      |\n|--------------------|-----------------|---------------------------------|-----------|\n| Base (0x4000_0000) | -               | 32-Kbyte RAM, Powered by V STBY | 32 Kbytes |\n| Base + 0x8000      | -               | 32-Kbyte RAM                    | 32 Kbytes |"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-3-1-register-descriptions",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.3.1 Register Descriptions"
+    ],
+    "chunk_type": "text",
+    "content": "The internal SRAM has no registers. Registers associated with the SRAM ECC are located in the ECSM. See Section 8.2.1, 'Register Descriptions.'"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-4-functional-description",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.4 Functional Description"
+    ],
+    "chunk_type": "text",
+    "content": "The RAM BIU generates a 72-bit code word based upon a 64-bit data write. The ECC scheme will correct all single bit corrections, and flag all double-bit errors. Some bit errors greater than 2 bits will be flagged as multiple bit errors. The codeword of 72'b0 and 72'b1 will cause a multi-bit error. Detected multiple bit errors will assert an error indication with the bus cycle, as well as setting a flag."
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-4-1-sram-ecc-mechanism",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.4.1 SRAM ECC Mechanism"
+    ],
+    "chunk_type": "list",
+    "content": "The ECC is calculated for each 64-bits of data. For example, for a byte write:\n\n- 1. The 64-bit word (double word-aligned) is read, which causes a check of ECC on all 64-bits. If a correctable error is detected, it will be corrected prior to merging in the write data. If a non-correctable error occurs during the read portion of the write operation, then the write will not be performed.\n- 2. The byte data is merged and the ECC is generated for the new 64-bit data value.\n- 3. The data and ECC bits are written back.\n\nIn the case of a 64-bit write, the 64-bit word is not read for the merge operation. Instead, the ECC is generated for the 64-bit word data then both data and ECC bits are written. Because the ECC bits will contain random data after power on, the 64-bit write mechanism is used to initialize the SRAM and insure that the ECC bits are valid. See Section 15.5, 'Initialization/Application Information.'"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-4-2-access-timing",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.4.2 Access Timing"
+    ],
+    "chunk_type": "text",
+    "content": "The system bus is a two-stage pipelined bus, which makes the timing of any access dependent on the access during the previous clock. Table 15-2 shows the wait states for accesses, column Current is the access being measured, and column Previous is the RAM access during the previous clock.\n\nTable 15-2. Wait States During RAM Access\n\n| Current        | Previous          | Waits                                   |\n|----------------|-------------------|-----------------------------------------|\n| Read           | Idle              | 1                                       |\n| Read           | Pipelined Read    | 1                                       |\n| Read           | Burst Read        | 1                                       |\n| Read           | 64-bit Write      | 2                                       |\n| Read           | 8/16/32-bit Write | 0(if reading from the same address)     |\n| Read           | 8/16/32-bit Write | 1 (if reading from a different address) |\n| Pipelined Read | Read              | 0                                       |\n| Burst Read     | idle              | 1,0,0,0                                 |\n\nTable 15-2. Wait States During RAM Access (continued)\n\n| Current                     | Previous                    | Waits                               |\n|-----------------------------|-----------------------------|-------------------------------------|\n| 8/16/32-bit Write           | idle                        | 1                                   |\n| 8/16/32-bit Write           | Read                        | 1                                   |\n| 8/16/32-bit Write           | Pipelined 8/16/32-bit write | 2                                   |\n| 8/16/32-bit Write           | 64-bit write                | 2                                   |\n| 8/16/32-bit Write           | 8/16/32-bit write           | 0 (if writing to the same addrerss) |\n| Pipelined 8/16/32-bit Write | 8/16/32-bit Write           | 0                                   |\n| 64-bit Write                | idle                        | 0                                   |\n| 64-bit Write                | 64-bit Write                | 0                                   |\n| 64-bit Write                | Read                        | 0                                   |\n| 64-bit Burst Write          | idle                        | 0,0,0,0                             |\n| 64-bit Burst Write          | 64-bit Write                | 0,0,0,0                             |\n| 64-bit Burst Write          | Read                        | 0,0,0,0                             |"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-4-3-reset-operation",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.4.3 Reset Operation"
+    ],
+    "chunk_type": "text",
+    "content": "When a reset event asserts while an access to system memory is in progress, the access will either complete successfully, or will not occur, depending on the cycle at which the reset occurs. Any data stored during such an access will be the intended data, and no other address locations will be accessed or changed. If the system RAM is cached, dirty cache lines may not be completely written to memory unless the region is set for write through mode."
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-5-initialization-application-information",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.5 Initialization/Application Information"
+    ],
+    "chunk_type": "text",
+    "content": "In order to use the SRAM, it is essential for the ECC check bits to be initialized after power on. A 64-bit cache inhibited write to each location in SRAM should be used to initialize the SRAM array as part of the application initialization code. The write transfer must be 64 bits in size, otherwise the write transfer will generate  a  read  /  modify  /  write  operation  which  will  check  the  ECC  value  upon  the  read.  See Section 15.4.1, 'SRAM ECC Mechanism.'"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-note",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "NOTE"
+    ],
+    "chunk_type": "text",
+    "content": "The SRAM must be initialized, even if the application does not use ECC reporting."
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-5-1-example-code",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.5.1 Example Code"
+    ],
+    "chunk_type": "text",
+    "content": "For  proper  initialization,  a  64-bit  write  must  be  made  to  all  SRAM  locations.  The  PowerPC  BookE instruction set provides the store multiple word ( stmw) instruction to implement 64-bit writes. The stmw instruction concatenates two 32-bit registers for use as a single 64-bit write. To insure that the writes are"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-internal-static-ram-sram",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "Internal Static RAM (SRAM)"
+    ],
+    "chunk_type": "text",
+    "content": "64-bit, the writes must be made on 64-bit word aligned boundaries, and an even number of registers should be specified.\n\nThe following example code illustrates the use of the stmw instruction to initialize the SRAM ECC bits.\n\ninit\\_L2RAM:\n\n```\nlis r11,0x4000 # base address of the L2SRAM, 64-bit word aligned ori r11,r11,0 # not needed for this address but could be forothers li r12,512 # loop counter to get all of L2SRAM; # 64k/4 bytes/32 GPRs = 512 mtctr r12 init_l2ram_loop: stmw r0,0(r11) # write all 32 GPRs to L2SRAM addi r11,r11,128 # inc the ram ptr; 32 GPRs * 4 bytes = 128 bdnz init_l2ram_loop # loop for 64k of L2SRAM blr # done\n```"
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-15-6-revision-history",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "15.6 Revision History"
+    ],
+    "chunk_type": "text",
+    "content": ""
+  },
+  {
+    "chunk_id": "chatper-15-internal-static-ram-sram-substantive-changes-since-rev-3-0",
+    "source_file": "../docs/15-chatper-15-internal-static-ram-sram.md",
+    "chapter_title": "15-chatper-15-internal-static-ram-sram",
+    "heading_hierarchy": [
+      "Chatper 15 Internal Static RAM (SRAM)",
+      "Substantive Changes since Rev 3.0"
+    ],
+    "chunk_type": "text",
+    "content": "```\nAdded Section 15.4.3, 'Reset Operation.'\n```"
+  }
+]

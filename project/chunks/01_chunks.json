@@ -1,0 +1,408 @@
+[
+  {
+    "chunk_id": "chatper-1-overview",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview"
+    ],
+    "chunk_type": "text",
+    "content": ""
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-1-introduction",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.1 Introduction"
+    ],
+    "chunk_type": "text",
+    "content": "The MPC5553 and MPC5554 microcontrollers (MCU) are the first members of the MPC5500 family of next generation powertrain microcontrollers based on the PowerPC Book E architecture. The MPC5500 family contains a PowerPC\u2122 processor core. This family of parts contains many new features coupled with  high  performance  CMOS  technology  to  provide  significant  performance  improvement  over  the MPC565.\n\nThe e200z6 CPU of the MPC5500 family is based on the PowerPC Book E architecture. It is 100% user mode compatible  (with  floating  point  library)  with  the  classic  PowerPC  instruction  set.  The  Book  E architecture has enhancements that improve the PowerPC architecture's fit in embedded applications. This core also has additional instructions, including digital signal processing (DSP) instructions, beyond the classic PowerPC instruction set.\n\nThe MPC5553 and MPC5554 of the MPC5500 family have two levels of memory hierarchy. The fastest accesses are to the unified cache (32-kilobytes in the MPC5554, 8-kilobytes in the MPC5553). The next level in the hierarchy contains the 96-kilobyte internal SRAM and internal Flash memory (2 Mbytes Flash in the MPC5554, 1.5 Mbytes in the MPC5553). Both the internal SRAM and the Flash memory can hold instructions  and  data.  The  external  bus  interface  has  been  designed  to  support  most  of  the  standard memories used with the MPC5xx family.\n\nThe complex I/O timer functions of the MPC5500 family are performed by an enhanced time processor unit  engines  (eTPU)  -  two  in  the  MPC5554,  one  in  the  MPC5553.  Each  eTPU  engine  controls  32 hardware channels. The eTPU has been enhanced over the TPU by providing 24-bit timers, double action hardware channels, variable  number  of  parameters  per  channel,  angle  clock  hardware,  and  additional control  and  arithmetic  instructions.  The  eTPU  can  be  programmed  using  a  high-level  programming language.\n\nThe  less  complex  timer  functions  of  the  MPC5500  family  are  performed  by  the  enhanced  modular input/output system (eMIOS). The eMIOS' 24 hardware channels are capable of single action, double action, pulse width modulation (PWM) and modulus counter operation. Motor control capabilities include edge-aligned and center-aligned PWM.\n\nOff-chip communication is performed by a suite of serial protocols including controller area networks (FlexCANs) - three FlexCANs in the MPC5554 and two in the MPC5553, an enhanced deserial/serial peripheral interface  (DSPI) - four in the MPC5554 and three in the MPC5553, and enhanced serial communications interfaces (eSCIs). The DSPIs support pin reduction through hardware serialization and deserialization of timer channels and general-purpose input/output (GPIO) signals.\n\nThe MCU of the MPC5553 and MPC5554 has an on-chip 40-channel enhanced queued dual analog to digital converter (eQADC).\n\nThe system integration unit (SIU) performs several chip-wide configuration functions. Pad configuration and general-purpose input and output (GPIO) are controlled from the SIU. External interrupts and reset control are also found in the SIU. The internal multiplexer submodule (SIU\\_DISR) provides multiplexing of eQADC trigger sources, daisy chaining the DSPIs, and external interrupt signal multiplexing.\n\nThe MPC5553 has a fast Ethernet controller (FEC) with a built-in FIFO and a DMA controller.\n\nFigure 1-1  is  a  block  diagram  of  the  MPC5554  (MPC5500  family  MCU),  and  Figure 1-2  is  a  block diagram of the MPC5553.\n\n<!-- image -->\n\nLEGEND"
+  },
+  {
+    "chunk_id": "chatper-1-overview-mpc5500-device-module-acronyms",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "MPC5500 Device Module Acronyms"
+    ],
+    "chunk_type": "list",
+    "content": "e200z6 Core Component Acronyms\n\nCAN\n\n- Controller area network (FlexCAN)\n\nDSPI\n\n- Deserial/serial peripheral interface\n\nDMA\n\n- Enhanced direct memory access\n\neMIOS\n\n- Enhanced modular I/O system\n\neQADC\n\n- Enhanced queued analog/digital converter\n\neSCI\n\n- Enhanced serial communications interface\n\neTPU\n\n- Enhanced time processing units\n\nFMPLL\n\n- Frequency modulated phase-locked loop\n\nSRAM\n\n- Static RAM\n\nDEC\n\n- Decrementer\n\nFIT\n\n- Fixed interval timer\n\nTB\n\n- Time base\n\nWDT\n\n- Watchdog timer\n\nFigure 1-1. MPC5554 Block Diagram\n\n<!-- image -->\n\nLEGEND\n\nMPC5500 Device Module Acronyms\n\ne200z6 Core Component Acronyms\n\nCAN\n\n- Controller area network (FlexCAN)\n\nDSPI\n\n- Deserial/serial peripheral interface\n\nDMA\n\n- Enhanced direct memory access\n\neMIOS\n\n- Enhanced modular I/O system\n\neQADC\n\n- Enhanced queued analog/digital converter\n\neSCI\n\n- Enhanced serial communications interface\n\neTPU\n\n- Enhanced time processing units\n\nFMPLL\n\n- Frequency modulated phase-locked loop\n\nSRAM\n\n- Static RAM\n\nDEC - Decrementer\n\nFIT\n\n- Fixed interval timer\n\nTB\n\n- Time base\n\nWDT\n\n- Watchdog timer\n\nFigure 1-2. MPC5553 Block Diagram"
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-2-features",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.2 Features"
+    ],
+    "chunk_type": "list",
+    "content": "This section provides a high-level description of the features found in the MPC5553 and MPC5554:\n\n- \u00b7 Operating parameters\n- - Fully static operation, 23.3 -132 MHz\n- - -40  to 150  C junction temperature \u00b0 \u00b0\n- - Low power design\n- -Less than 1.2 Watts power dissipation\n- -Designed for dynamic power management of core and peripherals\n- -Software-controlled clock gating of peripherals\n- -Separate power supply for stand-by operation for portion of internal SRAM\n- - Fabricated in 0.13 \u00b5 m process\n- - 1.5V internal logic\n- - Input and output pins with 3.0V 5.5V range -\n- -35%/65% V DDE  CMOS switch levels (with hysteresis)\n- -Selectable hysteresis\n- -Selectable slew rate control\n- - External bus and Nexus pins support 1.62V 3.6V operation -\n- -Selectable drive strength control\n- -Unused pins configurable as GPIO\n- - Designed with EMI reduction techniques\n- -Frequency modulated phase-locked loop\n- -On-chip bypass capacitance\n- -Selectable slew rate and drive strength\n- \u00b7 High performance e200z6 core processor\n- - 32-bit PowerPC Book E compliant CPU\n- - Thirty-two 64-bit general-purpose registers (GPRs)\n- - Memory management unit (MMU) with 32-entry fully-associative translation look-aside buffer (TLB)\n- - Branch processing unit\n- - Fully pipelined load/store unit\n- - 32 kilobyte unified cache (in the MPC5554), 8 kilobyte unified cache (in the MPC5553) with line locking\n- -8-way set associative in the MPC5554, 2-way set associative in the MPC5553\n- -Two 32-bit fetches per clock\n- -8-entry store buffer\n- -Way locking\n- -Supports assigning cache as instruction or data only on a per way basis\n- -Supports tag and data parity\n- - Vectored interrupt support\n\n- - Interrupt latency &lt; 70 ns @132MHz (measured from interrupt request to execution of first instruction of interrupt exception handler)\n- - Reservation instructions for implementing read-modify-write constructs (internal SRAM and Flash)\n- - Signal processing engine (SPE) auxiliary processing unit (APU) operating on 64-bit GPRs\n- - Floating point\n- -IEEE \u00ae 754 compatible with software wrapper\n- -Single precision in hardware, double precision with software library\n- -Conversion instructions between single precision floating point and fixed point\n- - Long cycle time instructions, except for guarded loads, do not increase interrupt latency in the MPC5554/MPC5553.  To reduce latency in both the MPC5553 and the MPC5554, long cycle time instructions are aborted upon interrupt requests.\n- - Extensive system development support through Nexus debug module\n- \u00b7 System bus crossbar switch (XBAR)\n- - 3 master ports in the MPC5554, 4 master ports in the MPC5553; 5 slave ports\n- - 32-bit address bus, 64-bit data bus\n- - Simultaneous accesses from different masters to different slaves (there is no clock penalty when a parked master accesses a slave)\n- \u00b7 Enhanced direct memory access (eDMA) controller\n- - 64 channels (MPC5554) or 32 channels (MPC5553) support independent 8-, 16-, 32-, or 64-bit single value or block transfers.\n- - Supports variable sized queues and circular queues.\n- - Source and destination address registers are independently configured to post-increment or remain constant.\n- - Each transfer is initiated by a peripheral, CPU, or eDMA channel request.\n- - Each eDMA channel can optionally send an interrupt request to the CPU on completion of a single value or block transfer.\n- \u00b7 Interrupt controller (INTC)\n- - 308 total interrupt vectors (MPC5554) or 212 total interrupt vectors (MPC5553)\n- -278 (MPC5554) or 191 (MPC5553) peripheral interrupt requests\n- -plus 8 software settable sources\n- -plus 22 reserved interrupts in the MPC5554, 13 reserved in the MPC5553\n- - Unique 9-bit vector per interrupt source\n- - 16 priority levels with fixed hardware arbitration within priority levels for each interrupt source\n- - Priority elevation for shared resources\n- \u00b7 Frequency modulated phase-locked loop (FMPLL)\n- - Input clock frequency from 8 MHz to 20 MHz\n- - Current controlled oscillator (ICO) range from 50 MHz to maximum device frequency\n- - Reduced frequency divider (RFD) for reduced frequency operation without re-lock\n- - Four selectable modes of operation\n- - Programmable frequency modulation\n- - Lock detect circuitry continuously monitors lock status\n- - Loss of clock (LOC) detection for reference and feedback clocks"
+  },
+  {
+    "chunk_id": "chatper-1-overview-overview",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "Overview"
+    ],
+    "chunk_type": "list",
+    "content": "- - Self-clocked mode (SCM) operation\n- - On-chip loop filter (reduces number of external components required)\n- - Engineering clock output\n- \u00b7 External bus interface (EBI)\n- - 1.8V 3.3V I/O nominal I/O voltage -\n- - Memory controller with support for various memory types\n- - MPC5554 specifications:\n- -32-bit data bus,  24-bit address bus with transfer size indication\n- - MPC5553 specifications:\n- -416 BGA: 32-bit data bus, 24-bit address bus without transfer size indication\n- -324 BGA: 16-bit data bus, 20-bit address bus\n- -208 MAPBGA: no external bus\n- - Selectable drive strength\n- - Configurable bus speed modes\n- - Support for external master accesses to internal addresses\n- - Burst support\n- - Bus monitor\n- - Chip selects\n- -In both the MPC5553 and MPC5554, four chip select (CS[0:3]) signals; but the MPC5553 has no CS signals in the 208 MAPBGA package.\n- -In the MPC5553 only, support for dynamic calibration with up to three calibration chip selects (CAL\\_CS[0] and CAL\\_CS[2:3])\n- - Configurable wait states\n- \u00b7 System integration unit (SIU)\n- - Centralized GPIO control of 214 (MPC5554) or 198 (MPC5553) I/O and bus pins\n- - Centralized pad control on a per-pin basis\n- - System reset monitoring and generation\n- - External interrupt inputs, filtering and control\n- - Internal multiplexer submodule (SIU\\_DISR, SIU\\_ETISR, SIU\\_EIISR)\n- \u00b7 Error correction status module (ECSM)\n- - Configurable error-correcting codes (ECC) reporting for internal SRAM and Flash memories\n- \u00b7 On-chip FLASH\n- - 2Mbytes (MPC5554) or 1.5 Mbytes (MPC5553) burst Flash memory\n- - 256K   64 bit configuration \u00d7\n- - Censorship protection scheme to prevent Flash content visibility\n- - Hardware read-while-write feature that allows blocks to be erased/programmed while other blocks are being read (used for EEPROM emulation and data calibration)\n- - 20 blocks (MPC5554) or 16 blocks (MPC5553) with sizes ranging from 16 Kbytes to 128 Kbytes to support features such as boot block, operating system block, and EEPROM emulation\n- - Read while write with multiple partitions\n- - Parallel programming mode to support rapid end of line programming\n\n- - Hardware programming state machine\n- \u00b7 Configurable cache memory, 32 kilobyte (MPC5554) / 0 - 8 kilobyte (MPC5553)\n- - 8-way set-associative, unified (instruction and data) cache in the MPC5554\n- - 2-way set-associative unified (instruction and data) cache in the MPC5553\n- \u00b7 On-chip internal static RAM (SRAM)\n- - 64 kilobyte general-purpose RAM of which 32 kilobytes are on standby power\n- - ECC performs single bit correction, double bit error detection\n- \u00b7 Boot assist module (BAM)\n- - Enables and manages the transition of MCU from reset to user code execution in the following configurations:\n- -User application can boot from internal or external Flash memory\n- -Download and execution of code via FlexCAN or eSCI\n- \u00b7 Enhanced modular I/O system (eMIOS)\n- - 24 orthogonal channels with double action, PWM, and modulus counter functionality\n- - Supports all DASM and PWM modes of MIOS14 (MPC5xx)\n- - Four selectable time bases plus shared time or angle counter bus\n- - DMA and interrupt request support\n- - Motor control capability\n- \u00b7 Enhanced time processor unit (eTPU)\n- - MPC5554 has two eTPU engines, MPC5553 has one engine\n- - Each eTPU engine is an event-triggered timer subsystem\n- - High level assembler/compiler\n- - 32 channels per engine\n- - 24-bit timer resolution\n- - 16 kilobyte shared code memory  in the MPC5554, 12 kilobyte shared code memory in the MPC5553\n- - 3 kilobyte (MPC5554) or 2.5 kilobyte (MPC5553)Shared data memory\n- - Variable number of parameters allocatable per channel\n- - Double match/capture channels\n- - Angle clock hardware support\n- - Shared time or angle counter bus for all eTPU and eMIOS modules\n- - DMA and interrupt request support\n- - Nexus class 3 debug support (with some class 4 support)\n- \u00b7 Enhanced queued analog/digital converter (eQADC)\n- - 2 independent ADCs with 12-bit A/D resolution\n- - Common mode conversion range of 0-5V\n- - 40 single-ended inputs channels, expandable to 65 channels with external multiplexers on 416 and 324 BGA packages\n- - 34 single-ended inputs channels, expandable to 57 channels with external multiplexers on 208 BGA packages\n- - 8 channels can be used as 4 pairs of differential analog input channels\n- - 10-bit accuracy at 400 ksamples/s, 8-bit accuracy at 800 ksamples/s\n- - Supports six FIFO queues with fixed priority."
+  },
+  {
+    "chunk_id": "chatper-1-overview-overview",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "Overview"
+    ],
+    "chunk_type": "list",
+    "content": "- - Queue modes with priority-based preemption; initiated by software command,  internal (eTPU and eMIOS), or external triggers\n- - DMA and interrupt request support\n- - Supports all functional modes from QADC (MPC5xx family)\n- \u00b7 4 (MPC5554) or 3 (MPC5553) deserial serial peripheral interface modules (DSPI)\n- - SPI\n- -Full duplex communication ports with interrupt and eDMA request support\n- -Supports all functional modes from QSPI submodule of QSMCM (MPC5xx family)\n- -Support for queues in RAM\n- -6 chip selects, expandable to 64 with external demultiplexers\n- -Programmable frame size, baud rate, clock delay and clock phase on a per frame basis\n- -Modified SPI mode for interfacing to peripherals with longer setup time requirements\n- - Deserial serial interface (DSI)\n- -Pin reduction by hardware serialization and deserialization of eTPU and eMIOS channels\n- -Chaining of DSI submodules\n- -Triggered transfer control and change in data transfer control (for reduced EMI)\n- \u00b7 2 enhanced serial communication interface (eSCI) modules\n- - UART mode provides NRZ format and half or full duplex interface\n- - eSCI bit rate up to 1 Mbps\n- - Advanced error detection, and optional parity generation and detection\n- - Word length programmable as 8 or 9 bits\n- - Separately enabled transmitter and receiver\n- - LIN Support\n- - DMA support\n- - Interrupt request support\n- \u00b7 3 (MPC5554) or 2 (MPC5553) FlexCANs\n- - 64 message buffers each\n- - Full implementation of the CAN protocol specification, Version 2.0B\n- - Based on and including all existing features of the Freescale TouCAN module\n- - Programmable acceptance filters\n- - Short latency time for high priority transmit messages\n- - Arbitration scheme according to message ID or message buffer number\n- - Listen only mode capabilities\n- - Programmable clock source:  system clock or oscillator clock\n- \u00b7 Nexus development interface (NDI)\n- - Per IEEE \u00ae -ISTO 5001-2003\n- - Real time development support for PowerPC core and eTPU engines through Nexus class 3 (some Class 4 support)\n- - Data trace of eDMA accesses\n- - Read and write access\n- - Configured via the IEEE \u00ae 1149.1 (JTAG) port\n- - High bandwidth mode for fast message transmission\n\n- - Reduced bandwidth mode for reduced pin usage\n- \u00b7 IEEE \u00ae 1149.1 JTAG controller (JTAGC)\n- - IEEE \u00ae 1149.1-2001 test access port (TAP) interface\n- - A JCOMP input that provides the ability to share the TAP. Selectable modes of operation include JTAGC/debug or normal system operation.\n- - A 5-bit instruction register that supports IEEE \u00ae 1149.1-2001 defined instructions.\n- - A 5-bit instruction register that supports additional public instructions.\n- - Three test data registers: a bypass register, a boundary scan register, and a device identification register.\n- - A TAP controller state machine that controls the operation of the data registers, instruction register and associated circuitry.\n- \u00b7 Voltage regulator controller\n- - Provides a low cost solution to power the core logic. It reduces the number of power supplies required from the customer power supply chip.\n- \u00b7 POR block\n- - Provides initial reset condition up to the voltage at which pins (RESET) can be read safely. It does not guarantee the safe operation of the chip at specified minimum operating voltages."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-3-mpc5553-specific-modules",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.3 MPC5553-Specific Modules"
+    ],
+    "chunk_type": "list",
+    "content": "The MPC5553 has one module not found on the MPC5554, a Fast Ethernet Controller (FEC) module that supports the following features:\n\n- - IEEE \u00ae 802.3 MAC (compliant with IEEE \u00ae 802.3 1998 edition)\n- - Built-in FIFO and DMA controller\n- - Support for different Ethernet physical interfaces:\n- -100Mbps IEEE \u00ae 802.3 MII\n- -10Mbps IEEE \u00ae 802.3 MII\n- -10Mbps 7-wire interface (industry standard)"
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-4-mpc5500-family-comparison",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.4 MPC5500 Family Comparison"
+    ],
+    "chunk_type": "text",
+    "content": "Table 1-1. MPC5500 Family Comparison\n\n| MPC5500 Device                     | MPC5554     | MPC5553     |\n|------------------------------------|-------------|-------------|\n| Core                               | e200z6      | e200z6      |\n| Cache                              | 32k         | 8k          |\n| Memory Management Unit             | 32 entry    | 32 entry    |\n| Crossbar                           | 3x5         | 4x5         |\n| Core Nexus                         | NZ6C3 (3+)  | NZ6C3 (3+)  |\n| SRAM                               | 64k         | 64k         |\n| Flash                              | 2M          | 1.5M        |\n| External bus (EBI)                 | 32 bit      | 32 bit      |\n| Direct Memory Access (eDMA)        | 64 channel  | 32 channel  |\n| DMA Nexus                          | Class 3     | Class 3     |\n| Serial                             | 2           | 2           |\n| eSCI_A                             | yes         | yes         |\n| eSCI_B                             | yes         | yes         |\n| Controller Area Network (CAN)      | 3           | 2           |\n| CAN_A                              | 64 buf      | 64 buf      |\n| CAN_B                              | 64 buf      | no          |\n| CAN_C                              | 64 buf      | 64 buf      |\n| DSPI                               | 4           | 3           |\n| DSPI_A                             | yes         | no          |\n| DSPI_B                             | yes         | yes         |\n| DSPI_C                             | yes         | yes         |\n| DSPI_D                             | yes         | yes         |\n| eMIOS                              | 24 channel  | 24 channel  |\n| eTPU                               | 64 channel  | 32 channel  |\n| eTPU_A                             | yes         | yes         |\n| eTPU_B                             | yes         | no          |\n| Code memory                        | 16k         | 12k         |\n| Parameter RAM                      | 3k          | 2.5k        |\n| Interrupt controller               | 300 channel | 200 channel |\n| Analog to Digital Converter        | 40 channel  | 40 channel  |\n| ADC_A                              | yes         | yes         |\n| ADC_B                              | yes         | yes         |\n| Phase Lock Loop (PLL)              | FM          | FM          |\n| Voltage Regulator Controller (VRC) | yes         | yes         |"
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-detailed-features",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5 Detailed Features"
+    ],
+    "chunk_type": "text",
+    "content": "The following sections provided detailed information about each of the on-chip modules."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-1-e200z6-core-overview",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.1 e200z6 Core Overview"
+    ],
+    "chunk_type": "text",
+    "content": "The MPC5553 and MPC5554 use the e200z6 core explained in detail in the e200z6 PowerPC TM Core Reference  Manual .  The  e200z6  CPU  utilizes  a  seven  stage  pipeline  for  instruction  execution.  The instruction fetch 1, instruction fetch 2, instruction decode/register file read, execute1, execute2/memory access1,  execute3/memory  access2,  and  register  writeback  stages  operate  in  an  overlapped  fashion, allowing single clock instruction execution for most instructions.\n\nThe integer execution unit consists of a 32-bit arithmetic unit (AU), a logic unit (LU), a 32-bit barrel shifter, a mask-insertion unit (MIU), a condition register manipulation unit (CRU), a count-leading-zeros unit (CLZ), a 32x32 hardware multiplier array, result feed-forward hardware, and support hardware for division.\n\nMost arithmetic and logical operations are executed in a single cycle with the exception of multiply, which is implemented with a pipelined hardware array, and the divide instructions. The CLZ unit operates in a single clock cycle.\n\nThe instruction unit contains a program counter (PC) incrementer and a dedicated branch address adder to minimize delays during change of flow operations. Sequential prefetching is performed to ensure a supply of  instructions  into  the  execution  pipeline.  Branch  target  prefetching  is  performed  to  accelerate  taken branches. Prefetched instructions are placed into an instruction buffer capable of holding 6 sequential instructions and 2 branch target instructions.\n\nBranch target addresses are calculated in parallel with branch instruction decode, resulting in execution time of three clocks. Conditional branches which are not taken execute in a single clock. Branches with successful lookahead and target prefetching have an effective execution time of one clock.\n\nMemory load and store operations are provided for byte, halfword, word (32-bit), and doubleword data with automatic zero or sign extension of byte and halfword load data. These instructions can be pipelined to allow effective single cycle throughput. Load and store multiple word instructions allow low overhead context save and restore operations. The load/store unit contains a dedicated effective address adder to allow effective address generation to be optimized.\n\nThe condition register unit supports the condition register (CR) and condition register operations defined by the PowerPC architecture. The condition register consists of eight 4-bit fields that reflect the results of certain operations, such as move, integer and floating-point compare, arithmetic, and logical instructions, and provide a mechanism for testing and branching.\n\nVectored and auto-vectored interrupts are supported by the CPU. Vectored interrupt support is provided to allow multiple interrupt sources to have unique interrupt handlers invoked with no software overhead.\n\nThe signal processing extension (SPE) APU supports vector instructions (SIMD) operating on 16- and 32-bit fixed-point data types, as well as 32-bit IEEE \u00ae -754 single-precision floating-point formats, and supports  single-precision  floating-point  operations  in  a  pipelined  fashion.  The  64-bit  general-purpose register  file  is  used  for  source  and  destination  operands,  and  there  is  a  unified  storage  model  for single-precision floating-point data types of 32-bits and the normal integer type. Low latency fixed-point and floating-point add, subtract, multiply, divide, compare, and conversion operations are provided, and most operations can be pipelined."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-2-system-bus-crossbar-switch",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.2 System Bus Crossbar Switch"
+    ],
+    "chunk_type": "text",
+    "content": "The  system  bus's  XBAR  multi-port  crossbar  switch  supports  simultaneous  connections  between three(MPC5554) or four (MPC5553) master ports and five slave ports. The crossbar supports a 32-bit address bus width and a 64-bit data bus width at all master and slave ports.\n\nThe crossbar allows for concurrent transactions to occur from any master port to any slave port. It is possible for all master ports and slave ports to be in use at the same time as a result of independent master requests. If a slave port is simultaneously requested by more than one master port, arbitration logic will select the higher priority master and grant it ownership of the slave port. All other masters requesting that slave port will be stalled until the higher priority master completes its transactions. By default, requesting masters will be treated with equal priority and will be granted access to a slave port in round-robin fashion, based upon the ID of the last master to be granted access."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-3-edma",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.3 eDMA"
+    ],
+    "chunk_type": "text",
+    "content": "The  enhanced  direct  memory  access  (eDMA)  controller  is  a  second-generation  module  capable  of performing complex data movements via 64 (MPC5554) or 32 (MPC5553) programmable channels, with minimal intervention from the  CPU. The hardware micro architecture includes a DMA engine which performs source and destination address calculations, and the actual data movement operations, along with an  SRAM-based  memory  containing  the  transfer  control  descriptors  (TCD)  for  the  channels.  This implementation is utilized to minimize the overall module size."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-4-intc",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.4 INTC"
+    ],
+    "chunk_type": "text",
+    "content": "The  interrupt  controller  (INTC)  provides  priority-based  preemptive  scheduling  of  interrupt  requests, suitable for statically scheduled real-time systems. The INTC allows interrupt request servicing from 308 (MPC5554)/212(MPC5553) interrupt sources.\n\nFor high priority interrupt requests, the time from the assertion of the interrupt request from the peripheral to when the processor is executing the interrupt service routine (ISR) has been minimized. The INTC provides a unique vector for each interrupt request source for quick determination of which ISR needs to be executed. It also provides an ample number of priorities so that lower priority ISRs do not delay the execution of higher priority ISRs. To allow the appropriate priorities for each source of interrupt request, the priority of each interrupt request is software configurable.\n\nWhen multiple tasks share a resource, coherent accesses to that resource must be supported. The INTC supports the priority ceiling protocol for coherent accesses. By providing a modifiable priority mask, the priority  level  can  be  raised  temporarily  so  that  no  task  can  prempt  another  task  that  shares  the  same resource.\n\nMultiple processors can assert interrupt requests to each other through software settable interrupt requests (by using application software to assert requests). These maskable interrupt requests can be used to split the software into a high priority portion and a low priority portion for servicing the interrupt requests. The high priority portion is initiated by a peripheral interrupt request, but then the ISR asserts a software settable interrupt request to finish the servicing in a lower priority ISR."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-5-fmpll",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.5 FMPLL"
+    ],
+    "chunk_type": "text",
+    "content": "The frequency modulated PLL (FMPLL) allows the user to generate high speed system clocks from an 8MHz  to  20MHz  crystal  oscillator  or external clock generator. Further, the FMPLL  supports programmable frequency modulation of the system clock. The PLL multiplication factor, output clock divider ratio, modulation depth, and modulation rate are all software configurable."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-6-ebi",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.6 EBI"
+    ],
+    "chunk_type": "text",
+    "content": "The external bus interface (EBI) controls data transfer across the crossbar switch to/from memories or peripherals  in  the  external  address  space.  The  EBI  also  enables  an  external  master  to  access  internal address space. The EBI includes a memory controller that generates interface signals to support a variety of  external  memories. The EBI memory controller supports single data rate (SDR) burst mode Flash, external SRAM, and asynchronous memories. In addition, the EBI supports up to 4 regions (via chip selects), along with programmed region-specific attributes."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-7-siu",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.7 SIU"
+    ],
+    "chunk_type": "text",
+    "content": "The  MPC5553/MPC5554  system  integration  unit  (SIU)  controls  MCU  reset  configuration,  pad configuration, external interrupt, general-purpose I/O (GPIO), internal peripheral multiplexing, and the system reset operation. The reset configuration module contains the external pin boot configuration logic. The pad configuration module controls the static electrical characteristics of I/O pins. The GPIO module provides  uniform  and  discrete  input/output  control  of  the  I/O  pins  of  the  MCU.  The  reset  controller performs reset monitoring of internal and external reset sources, and drives the RSTOUT pin. The SIU is accessed by the e200z6 core through the crossbar switch."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-8-ecsm",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.8 ECSM"
+    ],
+    "chunk_type": "text",
+    "content": "The error correction status module (ECSM) provides status information regarding platform memory errors reported by error-correcting codes."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-9-flash",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.9 Flash"
+    ],
+    "chunk_type": "text",
+    "content": "The MPC5554 provides 2 Mbytes of programmable, non-volatile, Flash memory storage. The MPC5553 provides 1.5 Mbytes of Flash memory.  The non-volatile memory (NVM) can be used for instruction and/or data storage.\n\nThe MPC5553/MPC5554 Flash also contains a Flash bus interface unit (FBIU) that interfaces the system bus to a dedicated Flash memory array controller. The FBIU supports a 64-bit data bus width at the system bus port, and a 256-bit read data interface to Flash memory. The FBIU contains two 256-bit prefetch buffers, and a prefetch controller that prefetches sequential lines of data from the Flash array into the buffer. Prefetch buffer hits allow no-wait responses. Normal Flash array accesses are registered in the FBIU and are forwarded to the system bus on the following cycle, incurring three wait-states. Prefetch operations  may  be  automatically  controlled,  and  may  be  restricted  to  servicing  a  single  bus  master. Prefetches may also be restricted to being triggered for instruction or data accesses."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-10-cache",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.10 Cache"
+    ],
+    "chunk_type": "text",
+    "content": "The e200z6 core supports a 32-Kbyte (MPC5554) / 8-Kbyte (MPC5553), 8-way (MPC5554) / 2-way (MPC5553)  set-associative,  unified  (instruction  and  data)  cache  with  a  32-byte  line  size.  The  cache improves system performance by providing low-latency data to the e200z6 instruction and data pipelines, which decouples processor performance from system memory performance. The cache is virtually indexed and  physically  tagged.  The  e200z6  does  not  provide  hardware  support  for  cache  coherency  in  a multi-master environment. Software must be used to maintain cache coherency with other possible bus masters.\n\nBoth instruction and data accesses are performed using a single bus connected to the cache. Addresses from  the  processor  to  the  cache  are  virtual  addresses  used  to  index  the  cache  array.  The  memory management unit (MMU) provides the virtual to physical translation for use in performing the cache tag"
+  },
+  {
+    "chunk_id": "chatper-1-overview-overview",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "Overview"
+    ],
+    "chunk_type": "text",
+    "content": "compare. The MMU may also be configured so that virtual addresses are passed through to the cache as the physical address untranslated. If the physical address matches a valid cache tag entry, the access hits in the cache. For a read operation, the cache supplies the data to the processor, and for a write operation, the data from the processor updates the cache. If the access does not match a valid cache tag entry (misses in the cache) or a write access must be written through to memory, the cache performs a bus cycle on the system bus."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-11-sram",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.11 SRAM"
+    ],
+    "chunk_type": "text",
+    "content": "The MPC5500 family's internal SRAM module provides a general-purpose 96-Kbyte memory block that supports mapped read/write accesses from any master. Included within the 96-Kbyte SRAM block is a 32-Kbyte  block  powered  by  a  separate  supply  for  standby  operation,  and  ECC  error  correction  and detection."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-12-bam",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.12 BAM"
+    ],
+    "chunk_type": "list",
+    "content": "The boot assist module (BAM) is a block of read-only memory that is programmed once by Freescale and is identical for all MCUs with an e200z6 core. The BAM program is executed every time the MCU is powered-on or reset in normal mode. The BAM supports the following four modes of booting:\n\n- \u00b7 Booting from internal Flash memory\n- \u00b7 Single master booting from external memory\n- \u00b7 Multi master booting from external memory with either no arbitration or external arbitration\n- \u00b7 Serial boot loading (a program is downloaded into RAM via eSCI or the FlexCAN and then executed).\n\nThe BAM also reads the reset configuration half word (RCHW) from Flash memory (either internal or external) and configures the MPC5553 and MPC5554 hardware accordingly."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-13-emios",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.13 eMIOS"
+    ],
+    "chunk_type": "text",
+    "content": "The enhanced modular I/O system (eMIOS) module provides the functionality to generate or measure time events. A unified channel (UC) module is employed that provides a superset of the functionality of all the MIOS channels, while providing a consistent user interface. This allows more flexibility as each unified channel can be programmed for different functions in different applications. In order to identify up to two timed events, each UC contains two comparators, a time base selector and registers. This structure is able to produce match events, which can be configured to measure or generate a waveform. Alternatively, input events can be used to capture the time base, allowing measurement of an input signal."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-14-etpu",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.14 eTPU"
+    ],
+    "chunk_type": "text",
+    "content": "The enhanced time processing  unit  (eTPU)  is  an  enhanced  co-processor  designed  for  timing  control. Operating in parallel with the CPU, the eTPU processes instructions and real-time input events, performs output waveform generation, and accesses shared data without host intervention. Consequently, for each timer event, the CPU setup and service times are minimized or eliminated. In the MPC5554 MCU, two eTPU engines  are  grouped  together  with  shared  instruction  and  data  RAM  to  form  a  powerful  time processing  subsystem.  The  MPC5553  has  one  eTPU  engine.  High-level  assembler/compiler  and documentation allows customers to develop their own functions on the eTPU. The eTPU supports several features of older TPU versions, making it easy to port older applications."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-15-eqadc",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.15 eQADC"
+    ],
+    "chunk_type": "text",
+    "content": "The enhanced queued analog to digital converter (eQADC) module provides accurate and fast conversions for a wide range of applications. The eQADC provides a parallel interface to two on-chip analog to digital converters (ADCs), and a single master-to-single slave serial interface to an off-chip external device. The two on-chip ADCs are architected to allow access to all the analog channels.\n\nThe eQADC transfers commands from multiple command FIFOs (CFIFOs) to the on-chip ADCs or to the external device. The module can also receive data from the on-chip ADCs or from an off-chip external device  into  multiple  result  FIFOs  (RFIFOs)  in  parallel,  independently  of  the  CFIFOs.  The  eQADC supports software and external hardware triggers from other modules to initiate transfers of commands from the CFIFOs to the on-chip ADCs or to the external device. It also monitors the fullness of CFIFOs and RFIFOs, and accordingly generates eDMA or interrupt requests to control data movement between the FIFOs and the system memory, which is external to the eQADC."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-16-dspi",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.16 DSPI"
+    ],
+    "chunk_type": "list",
+    "content": "The  deserial  serial  peripheral  interface  (DSPI)  module  provides  a  synchronous  serial  interface  for communication between the MCU and external devices. The DSPI supports pin count reduction through serialization and deserialization of eTPU channels, eMIOS channels and memory-mapped registers. The channels and register content are transmitted using a SPI-like protocol. There are four identical DSPI modules (DSPI\\_A, DSPI\\_B, DSPI\\_C, and DSPI\\_D) on the MPC5554 MCU. The MPC5553 has three DSPI modules (DSPI\\_B, DSPI\\_C, and DSPI\\_D).\n\nThe DSPIs have three configurations:\n\n- \u00b7 Serial peripheral interface (SPI) configuration where the DSPI operates as a SPI with support for queues\n- \u00b7 Deserial serial interface (DSI) configuration where the DSPI serializes eTPU and eMIOS output channels and deserializes the received data by placing it on the eTPU and eMIOS input channels\n- \u00b7 Combined serial interface (CSI) configuration where the DSPI operates in both SPI and DSI configurations interleaving DSI frames with SPI frames, giving priority to SPI frames\n\nFor queued operations, the SPI queues reside in system memory external to the DSPI. Data transfers between the memory and the DSPI FIFOs are accomplished through the use of the eDMA controller or through host software."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-17-esci",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.17 eSCI"
+    ],
+    "chunk_type": "text",
+    "content": "The enhanced serial communications interface (eSCI) allows asynchronous serial communications with peripheral devices and other MCUs. It includes special support to interface to local interconnect network (LIN) slave devices."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-18-flexcan",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.18 FlexCAN"
+    ],
+    "chunk_type": "text",
+    "content": "The MCU contains three (MPC5554) or two (MPC5553) controller area network (FlexCAN) modules. Each FlexCAN module is a communication controller implementing the CAN protocol according to CAN Specification version 2.0B. The CAN protocol was designed to be used primarily as a vehicle serial data bus, meeting the specific requirements of this field: real-time processing, reliable operation in the EMI environment of a vehicle, cost-effectiveness and required bandwidth. Each FlexCAN module contains 64 message buffers (MB)."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-19-ndi",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.19 NDI"
+    ],
+    "chunk_type": "text",
+    "content": "The Nexus development interface (NDI) module provides real-time development support capabilities for the MPC5500 family's PowerPC-based MCU in compliance with the IEEE \u00ae -ISTO 5001-2003 standard. This development support is supplied for MCUs without requiring external address and data pins for internal visibility. The NDI module is an integration of several individual Nexus modules that are selected to provide the development support interface for the MPC5500 family. The NDI module interfaces to the host processor, to one or dual eTPU processors, and internal buses to provide development support as per the IEEE \u00ae -ISTO 5001-2003 standard. The development support provided includes program trace, data trace, watchpoint trace, ownership trace, run-time access to the MCU's internal memory map, and access to the PowerPC and eTPU internal registers during halt, via the auxiliary port. The Nexus interface also supports a JTAG only mode using only the JTAG pins."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-20-jtagc",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.20 JTAGC"
+    ],
+    "chunk_type": "text",
+    "content": "The JTAG controller (JTAGC) module provides the means to test chip functionality and connectivity while remaining transparent to system logic when not in test mode. Testing is performed via a boundary scan technique, as defined in the IEEE \u00ae 1149.1-2001 standard. All data input to and output from the JTAGC module is communicated in serial format. The JTAGC module is compliant with the IEEE \u00ae 1149.1-2001 standard."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-5-21-fec-mpc5553-only",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.5.21 FEC (MPC5553 Only)"
+    ],
+    "chunk_type": "list",
+    "content": "The fast Ethernet controller (FEC) of the MPC5553 supports several standard MAC-PHY interfaces to connect to an external Ethernet transceiver:\n\n- \u00b7 10/100 Mbps MII interface\n- \u00b7 10 Mbps 7-Wire interface that uses a subset of the MII pins"
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-6-mpc5500-family-memory-map",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.6 MPC5500 Family Memory Map"
+    ],
+    "chunk_type": "text",
+    "content": "This section describes the MPC5500 family memory map. All addresses in the device, including those that are reserved, are identified in the tables. The addresses represent the physical addresses assigned to each module. Logical addresses are translated by the MMU into physical addresses.\n\nUnder software control of the MMU, the logical addresses allocated to modules may be changed on a minimum of a 4-Kbyte boundary. Peripheral modules may be redundantly mapped. The customer must use the MMU to prevent corruption.\n\nTable 1-2 shows a detailed memory map.\n\nTable 1-2. Detailed MPC5554/MPC5553 Family Memory Map\n\n| Address Range 1                                                     | Allocated Size 1 (bytes)                                          | Used Size (bytes)                       | Use                                                  |\n|---------------------------------------------------------------------|-------------------------------------------------------------------|-----------------------------------------|------------------------------------------------------|\n| 0x0000_0000-0x001F_FFFF (MPC5554) 0x0000_0000-0x0017_FFFF (MPC5553) | 2 Mbytes                                                          | 2 Mbytes (MPC5554) 1.5 Mbytes (MPC5553) | FLASH Memory Array                                   |\n| 0x0020_0000-0x00FF_FBFF (MPC5554) 0x0018_0000-0x00FF_FBFF (MPC5553) | (14 Mbytes - 1 Kbyte) (MPC5554) (14.5 Mbytes - 1 Kbyte) (MPC5553) | N/A                                     | Reserved                                             |\n| 0x00FF_FC00-0x00FF_FFFF                                             | 1024                                                              | 1024 bytes                              | FLASH Shadow Row                                     |\n| 0x0100_0000-0x1FFF_FFFF                                             | 496 Mbytes                                                        | 2 Mbytes                                | emulation mapping of FLASH Array                     |\n| 0x2000_0000-0x3FFF_FFFF                                             | 512 Mbytes                                                        | N/A                                     | External Memory                                      |\n| 0x4000_0000-0x4000_7FFF                                             | 32 Kbytes                                                         | 32 Kbytes                               | Internal SRAM Array, Standby Powered                 |\n| 0x4000_8000-0x4000_FFFF                                             | 32 Kbytes                                                         | 32 Kbytes                               | Internal SRAM Array                                  |\n| 0x4001_0000-0xBFFF_FFFF                                             | (2048Mbytes-64 Kbytes)                                            | N/A                                     | Reserved                                             |\n| Bridge A Peripherals                                                | Bridge A Peripherals                                              | Bridge A Peripherals                    | Bridge A Peripherals                                 |\n| 0xC000_0000-0xC3EF_FFFF                                             | 63 M                                                              | N/A                                     | Reserved                                             |\n| 0xC3F0_0000-0xC3F0_3FFF                                             | 16 K                                                              | -                                       | Bridge A Registers                                   |\n| 0xC3F0_4000-0xC3F7_FFFF                                             | 496K                                                              | N/A                                     | Reserved                                             |\n| 0xC3F8_0000-0xC3F8_3FFF                                             | 16 Kbytes                                                         | -                                       | FMPLL Registers                                      |\n| 0xC3F8_4000-0xC3F8_7FFF                                             | 16 Kbytes                                                         | 48                                      | External Bus Interface (EBI) Configuration Registers |\n| 0xC3F8_8000-0xC3F8_BFFF                                             | 16 Kbytes                                                         | 28                                      | Flash Configuration Registers                        |\n| 0xC3F8_C000-0xC3F8_FFFF                                             | 16 Kbytes                                                         | N/A                                     | Reserved                                             |\n| 0xC3F9_0000-0xC3F9_3FFF                                             | 16 Kbytes                                                         | 2.5 Kbytes                              | System Integration Unit (SIU)                        |\n| 0xC3F9_4000-0xC3F9_FFFF                                             | 48 Kbytes                                                         | N/A                                     | Reserved                                             |\n| 0xC3FA_0000-0xC3FA_3FFF                                             | 16 Kbytes                                                         | 1056                                    | Modular Timer System (eMIOS/MTS)                     |\n| 0xC3FA_4000-0xC3FB_FFFF                                             | 112 Kbytes                                                        | N/A                                     | Reserved                                             |\n| 0xC3FC_0000-0xC3FC_3FFF                                             | 16 Kbytes                                                         | 3 Kbytes                                | Enhanced Time Processing Unit (eTPU) Registers       |\n| 0xC3FC_4000-0xC3FC_7FFF                                             | 16 Kbytes                                                         | N/A                                     | Reserved                                             |\n| 0xC3FC_8000-0xC3FC_BFFF                                             | 16 Kbytes                                                         | 3 Kbytes (MPC5554) 2.5 Kbytes (MPC5553) | eTPU Shared Data Memory (Parameter RAM)              |"
+  },
+  {
+    "chunk_id": "chatper-1-overview-mpc5553-mpc5554-microcontroller-reference-manual-rev-3-1",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1"
+    ],
+    "chunk_type": "text",
+    "content": "Table 1-2. Detailed MPC5554/MPC5553 Family Memory Map (continued)\n\n| Address Range 1          | Allocated Size 1 (bytes)   | Used Size (bytes)                       | Use                                                 |\n|--------------------------|----------------------------|-----------------------------------------|-----------------------------------------------------|\n| 0xC3FC_C000-0xC3FC_FFFF  | 16 Kbytes                  | 3 Kbytes (MPC5554) 2.5 Kbytes (MPC5553) | eTPU Shared Data Memory (Parameter RAM) mirror      |\n| 0xC3FD_0000-0xC3FD_3FFF  | 16 Kbytes                  | 16 Kbytes (MPC5554) 12 Kbytes (MPC5553) | eTPU Shared Code RAM                                |\n| 0xC3FD_4000-0xC3FF_FFFF  | 176 Kbytes                 | N/A                                     | Reserved                                            |\n| 0xC400_0000-0xDFFF_FFFF  | (512 Mbytes-64 Mbytes)     | N/A                                     | Reserved                                            |\n| Bridge B Peripherals     | Bridge B Peripherals       | Bridge B Peripherals                    | Bridge B Peripherals                                |\n| 0xE000_0000-0xFBFF_FFFF  | (512 Mbytes-64 Mbytes)     | N/A                                     | Reserved                                            |\n| 0xFC00_0000-0xFFEF_FFFF  | 63 Mbytes                  | N/A                                     | Reserved                                            |\n| 0xFFF0_0000-0xFFF0_3FFF  | 16 K                       | N/A                                     | Bridge B Registers                                  |\n| 0xFFF0_4000-0xFFF0_7FFF  | 16 K                       | N/A                                     | System Bus Crossbar Switch (XBAR)                   |\n| 0xFFF0__8000-0xFFF0_FFFF | 32 K                       | N/A                                     | Reserved                                            |\n| 0xFFF1_0000-0xFFF3_FFFF  | 192 K                      | N/A                                     | Reserved                                            |\n| 0xFFF4_0000-0xFFF4_3FFF  | 16 K                       | N/A                                     | ECSM                                                |\n| 0xFFF4_4000-0xFFF4_7FFF  | 16 K                       | N/A                                     | DMA Controller 2 (eDMA)                             |\n| 0xFFF4_8000-0xFFF4_BFFF  | 16 K                       | N/A                                     | Interrupt Controller (INTC)                         |\n| 0xFFF4_C000-0xFFF4_FFFF  | 16 K                       | N/A                                     | Fast Ethernet Controller (FEC) 2 MPC5553 Only       |\n| 0xFFFC_0000-0xFFF4_FFFF  | 15 K                       | N/A                                     | Reserved -- MPC5554 Only                            |\n| 0xFFF5_0000-0xFFF7_FFFF  | 192 K                      | N/A                                     | Reserved                                            |\n| 0xFFF8_0000-0xFFF8_3FFF  | 16 Kbytes                  | 164                                     | Enhanced Queued Analog-to-Digital Converter (eQADC) |\n| 0xFFF8_4000-0xFFF8_FFFF  | 48 Kbytes                  | N/A                                     | Reserved                                            |\n| 0xFFF9_0000-0xFFF9_3FFF  | 16 Kbytes                  | 200                                     | Deserial Serial Peripheral Interface (DSPI_A) 3     |\n| 0xFFF9_4000-0xFFF9_7FFF  | 16 Kbytes                  | 200                                     | Deserial Serial Peripheral Interface (DSPI_B)       |\n| 0xFFF9_8000-0xFFF9_BFFF  | 16 Kbytes                  | 200                                     | Deserial Serial Peripheral Interface (DSPI_C)       |\n| 0xFFF9_C000-0xFFF9_FFFF  | 16 Kbytes                  | 200                                     | Deserial Serial Peripheral Interface (DSPI_D)       |\n| 0xFFFA_0000-0xFFFA_FFFF  | 64 Kbytes                  | N/A                                     | Reserved                                            |\n| 0xFFFB_0000-0xFFFB_3FFF  | 16 Kbytes                  | 44                                      | Serial Communications Interface (SCI_A)             |\n| 0xFFFB_4000-0xFFFB_7FFF  | 16 Kbytes                  | 44                                      | Serial Communications Interface (SCI_B)             |\n| 0xFFFB_8000-0xFFFB_FFFF  | 32 Kbytes                  | N/A                                     | Reserved                                            |\n| 0xFFFC_0000-0xFFFC_3FFF  | 16 Kbytes                  | 1152                                    | Controller Area Network (FlexCAN_A)                 |"
+  },
+  {
+    "chunk_id": "chatper-1-overview-mpc5553-mpc5554-microcontroller-reference-manual-rev-3-1",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "MPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1"
+    ],
+    "chunk_type": "list",
+    "content": "Table 1-2. Detailed MPC5554/MPC5553 Family Memory Map (continued)\n\n| Address Range 1           | Allocated Size 1 (bytes)   | Used Size (bytes)   | Use                                   |\n|---------------------------|----------------------------|---------------------|---------------------------------------|\n| 0xFFFC_4000-0xFFFC_7FFF   | 16 Kbytes                  | 1152                | Controller Area Network (FlexCAN_B) 3 |\n| 0xFFFC_8000-0xFFFC_BFFF   | 16 Kbytes                  | 1152                | Controller Area Network (FlexCAN_C)   |\n| 0xFFFC_C000-0xFFFF_BFFF   | 192 Kbytes                 | N/A                 | Reserved                              |\n| 0xFFFF_C000-0xFFFF_FFFF 4 | 16 Kbytes                  | 16 Kbytes           | Boot Assist Module (BAM)              |\n\n- 1 If allocated size &gt; used size, then the base address for the module is the lowest address of the listed address range, unless noted otherwise.\n- 2 MPC5553 only, not in MPC5554\n- 3 MPC5554 only, not in MPC5553\n- 4 BAM address range is configured so that 4Kbyte BAM occupies 0xFFFF\\_F000-0xFFFF\\_FFFF"
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-7-multi-master-operation-memory-map",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.7 Multi-Master Operation Memory Map"
+    ],
+    "chunk_type": "list",
+    "content": "When the MPC5553/MPC5554 MCU acts as a slave in a multi-master system, the external bus interface (EBI) translates  the  24-bit  external  address  to  a  32-bit  internal  address.  Table 1-3  lists  the  translation parameters.\n\nTable 1-3. External to Internal Memory Map Translation Table for Slave Mode\n\n| Ext Addr[8:11] 1   | Internal Addr[0:11]   | Size (bytes)   | Internal Slave       | Internal Address Range    |\n|--------------------|-----------------------|----------------|----------------------|---------------------------|\n| 0b0xxx             | N/A                   | 8 Mbytes       | N/A                  | N/A-Off-chip Flash access |\n| 0b10xx             | 0b0000_0000_00xx      | 4 Mbytes       | Internal FLASH Array | 0x0000_0000-0x003F_FFFF   |\n| 0b1100             | 0b0100_0000_0000      | 1 Mbyte        | Internal SRAM        | 0x4000_0000-0x400F_FFFF   |\n| 0b1101             | 0b0110_0000_0000      | 1 Mbyte        | Reserved 2           | 0x6000_0000-0x600F_FFFF   |\n| 0b1110             | 0b1100_0011_1111      | 1 Mbyte        | Bridge A Peripherals | 0xC3F0_0000-0xC3FF_FFFF   |\n| 0b1111             | 0b1111_1111_1111      | 1 Mbyte        | Bridge B Peripherals | 0xFFF0_0000-0xFFFF_FFFF   |\n\n- 1 Only the lower 24 address signals (addr[8:31]) are available off-chip.\n- 2 Reserved for a future module that requires its own crossbar slave port.\n\nTable 1-4 shows the memory map for the MPC5553/MPC5554 MCU acting as a slave in a multi-master system from the point of view of the external master.\n\nTable 1-4. MPC5500 Family Slave Memory Map as Seen from an External Master\n\n| External Address Range 1                                   | Size (bytes)                          | Use                                   |\n|------------------------------------------------------------|---------------------------------------|---------------------------------------|\n| 0x00_0000 2 -0x7F_FFFF                                     | 8 Mbytes                              | N/A-Used for off-chip memory accesses |\n| 0x80_0000-0x9F_FFFF(MPC5554) 0x80_0000-0x97_FFFF(MPC5553)  | 2 Mbytes(MPC5554) 1.5 Mbytes(MPC5553) | Slave FLASH 3                         |\n| 0xA0_0000-0xBF_FFFF(MPC5554)0x98_0 000 -0xBF_FFFF(MPC5553) | 2 Mbytes(MPC5554) 2.5 Mbytes(MPC5553) | Reserved                              |\n| 0xC0_0000-0xC0_FFFF                                        | 64 Kbytes                             | Slave Internal SRAM                   |\n| 0xC1_0000-0xCF_FFFF                                        | (1 Mbytes-64 Kbytes)                  | Reserved                              |\n| 0xD0_0000-0xDF_FFFF                                        | 1 Mbytes                              | Reserved                              |\n| 0xE0_0000-0xEF_FFFF                                        | 1 Mbytes                              | Slave Bridge A Peripherals            |\n| 0xF0_0000-0xFF_FFFF                                        | 1 Mbytes                              | Slave Bridge B Peripherals            |\n\n1 Only the lower 24 address signals (addr[8:31]) are available off-chip.\n\n2 This address range is not part of the MPC5500 family slave memory map, rather it is shown to illustrate the addressing scheme for off-chip accesses in multi-master mode.\n\n3 The shadow row of the slave FLASH is not accessible by an external master.\n\nTable 1-5 shows the memory map for the MPC5553 and MPC5554family MCU configured as a master in multi-master system with another MPC5500 family MCU acting as the slave.\n\nTable 1-5. MPC5500 Family Master Memory Map (Multi Master Mode)\n\n| Base Address            | Size (bytes)                                      | Use                        |\n|-------------------------|---------------------------------------------------|----------------------------|\n| On-Chip                 | On-Chip                                           | On-Chip                    |\n| 0x0000_0000             | 2 Mbytes(MPC55545) 1.5 Mbytes(MPC5553)            | FLASH Array                |\n| 0x0020_0000 0x0018_0000 | (14 Mbytes-1024 bytes) (14.5 Mbytes - 1024 bytes) | Reserved                   |\n| 0x00FF_FC00             | 1024                                              | FLASH Shadow Row           |\n| 0x0100_0000             | 496 Mbytes                                        | emulation mapping Flash    |\n| Off-Chip                | Off-Chip                                          | Off-Chip                   |\n| 0x2000_0000             | 8 Mbytes 1                                        | External Memory            |\n| 0x2080_0000             | 2 Mbytes                                          | Slave FLASH                |\n| 0x20A0_0000 0x2098_0000 | 2 Mbytes                                          | Reserved                   |\n| Not Addressable         | 1024                                              | Slave FLASH Shadow Row     |\n| 0x20C0_0000             | 64 Kbytes                                         | Slave Internal SRAM        |\n| 0x20C1_0000             | (2 Mbytes-64 Kbytes)                              | Reserved                   |\n| 0x20E0_0000             | 1 Mbytes                                          | Slave Bridge A Peripherals |\n\nMPC5553/MPC5554 Microcontroller Reference Manual, Rev. 3.1\n\nTable 1-5. MPC5500 Family Master Memory Map (Multi Master Mode)  (continued)\n\n| Base Address   | Size (bytes)             | Use                        |\n|----------------|--------------------------|----------------------------|\n| 0x20F0_0000    | 1 Mbytes                 | Slave Bridge B Peripherals |\n| On-Chip        | On-Chip                  | On-Chip                    |\n| 0x4000_0000    | 96 Kbytes                | Internal SRAM              |\n| 0x4001_8000    | (2048 Mbytes-96 Kbytes)  | Reserved                   |\n| 0xC000_0000    | 63 Mbytes                | Reserved                   |\n| 0xC3F0_0000    | 1 Mbytes                 | Bridge A Peripherals       |\n| 0xC400_0000    | (1024 Mbytes-128 Mbytes) | Reserved                   |\n| 0xFC00_0000    | 63 Mbytes                | Reserved                   |\n| 0xFFF0_0000    | 1 Mbyte                  | Bridge B Peripherals       |\n\n- 1 By using the 4 chip select signals, 32 Mbytes of external memory can be accessed by the master in a multi-master system."
+  },
+  {
+    "chunk_id": "chatper-1-overview-1-8-revision-history",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "1.8 Revision History"
+    ],
+    "chunk_type": "table",
+    "content": "| Substantive Changes since Rev 3.0                                                                                         |\n|---------------------------------------------------------------------------------------------------------------------------|\n| Features list - changed '40%/70% V DDE CMOS switch levels (with hysteresis)' to be 35%/65%                                |\n| Fixed reference to CAL_CS[0:2]. On MPC5553, CAL_CS[1] is not implemented.                                                 |\n| Fixed a typo - '308212 interrupts' - split it to 308 for MPC5554 and 212 for MPC5553.                                     |\n| Updated both MPC5553 and MPC5554 block diagrams.                                                                          |\n| In features list, changed '96 kilobyte general-purpose RAM of which 32 kilobytes are on standby power' to be 64 kilobyte. |\n"
+  },
+  {
+    "chunk_id": "chatper-1-overview-overview",
+    "source_file": "../docs/01-chatper-1-overview.md",
+    "chapter_title": "01-chatper-1-overview",
+    "heading_hierarchy": [
+      "Chatper 1 Overview",
+      "Overview"
+    ],
+    "chunk_type": "text",
+    "content": ""
+  }
+]

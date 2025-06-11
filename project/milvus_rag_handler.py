@@ -92,38 +92,12 @@ class MilvusRAGHandler:
         self.config = full_config.get('milvus', {})
         self.knowledge_config = full_config.get('knowledge_base', {})
         
-        # Initialize embedding service
-        self.embedding_service = self.config.get("embedding_service", "sentence-transformers")
+        # Initialize embedding model from config
+        self.embedding_model_name = self.config["embedding_model"]
+        self.logger.info(f"Using embedding model: {self.embedding_model_name}")
         
-        if self.embedding_service == "ollama":
-            self.ollama_endpoint = self.config.get("ollama_endpoint", "http://localhost:11434") # Corrected initialization
-            self.ollama_model = self.config.get("ollama_model", "nomic-embed-text") # Added get with default
-            self.logger.info(f"Using Ollama embedding service with model: {self.ollama_model} at endpoint: {self.ollama_endpoint}")
-        else:
-            # Fallback to SentenceTransformers
-            try:
-                # Disable SSL verification for model download
-                import requests
-                from functools import partial
-                from sentence_transformers import util
-                
-                # Create a session that doesn't verify SSL
-                session = requests.Session()
-                session.verify = False
-                
-                # Monkey patch the download function to use our unverified session
-                original_download = util.http_get
-                util.http_get = partial(original_download, session=session)
-                
-                # Now load the model
-                self.embedding_model = SentenceTransformer(self.config["embedding_model"])
-                self.logger.info(f"Loaded embedding model: {self.config['embedding_model']}")
-                
-                # Restore original download function
-                util.http_get = original_download
-            except Exception as e:
-                self.logger.error(f"Failed to load embedding model: {e}")
-                raise MilvusConnectionError(f"Failed to load embedding model: {e}")
+        # We'll load the model when needed
+        self.embedding_model = None
         
         # Connect to Milvus
         self._connect()
@@ -437,7 +411,7 @@ class MilvusRAGHandler:
         sections: Dict[str, List[Dict[str, Any]]]
     ) -> Tuple[bool, List[str]]:
         """
-        Validate retrieved context for completeness.
+        Validate retrieved context for completeness with early termination.
         
         Args:
             context: Assembled context string
@@ -446,6 +420,13 @@ class MilvusRAGHandler:
         Returns:
             Tuple of (is_valid, list of missing sections)
         """
+        missing_sections = []
+        
+        # Early termination for empty context
+        if not context.strip():
+            self.logger.warning("Context validation failed: empty_context")
+            return False, ["empty_context"]
+        
         # Define essential sections
         essential_sections = [
             SectionType.MEMORY_MAP.value,
@@ -454,25 +435,20 @@ class MilvusRAGHandler:
         ]
         
         # Check for missing essential sections
-        missing_sections = []
         for section in essential_sections:
-            if section not in sections or not sections[section]:
+            if not sections.get(section):
                 missing_sections.append(section)
         
-        # Additional validation checks
-        if context.strip() == "":
-            missing_sections.append("empty_context")
-        
-        # Check minimum content length
-        if len(context) < 500:  # Arbitrary minimum
+        # Check content length if no essential sections missing
+        if not missing_sections and len(context) < 500:
             missing_sections.append("insufficient_content")
         
-        is_valid = len(missing_sections) == 0
+        is_valid = not missing_sections
         
-        if not is_valid:
-            self.logger.warning(f"Context validation failed. Missing: {missing_sections}")
-        else:
+        if is_valid:
             self.logger.info("Context validation passed")
+        else:
+            self.logger.warning(f"Context validation failed. Missing: {missing_sections}")
         
         return is_valid, missing_sections
     
@@ -508,7 +484,7 @@ class MilvusRAGHandler:
             # Pre-check: Verify collection has documents
             if self.doc_collection.num_entities == 0:
                 self.logger.error(f"Document collection '{self.doc_collection.name}' is empty! Cannot retrieve documents.")
-                raise DocumentRetrievalError("Document collection is empty. Please index documents first.")
+                raise DocumentRetrievalError("Document collection is empty. Please run the 'update-knowledge' command first to populate the vector database.")
             
             # Log start of retrieval with parameters
             self.logger.info(f"Starting smart context retrieval for peripheral: {peripheral_name}, query: '{query}'")
@@ -676,18 +652,27 @@ class MilvusRAGHandler:
             metadata = [doc.get("metadata", {}) for doc in documents]
             timestamps = [int(datetime.now().timestamp()) for _ in documents]
             
-            # Insert data
-            entities = [
-                contents,
-                embeddings,
-                metadata,
-                timestamps
-            ]
+            # Insert data - create proper entity structure
+            entities = []
+            # Check that all lists have the same length
+            if not (len(contents) == len(embeddings) == len(metadata) == len(timestamps)):
+                self.logger.error(f"List lengths do not match: contents={len(contents)}, embeddings={len(embeddings)}, metadata={len(metadata)}, timestamps={len(timestamps)}")
+                raise MilvusException("List lengths do not match, cannot insert documents")
+            
+            # Use zip to safely iterate through the lists
+            for content, embedding, meta, ts in zip(contents, embeddings, metadata, timestamps):
+                entity = {
+                    "content": content,
+                    "embedding": embedding,
+                    "metadata": meta,
+                    "timestamp": ts
+                }
+                entities.append(entity)
             
             insert_result = collection.insert(entities)
             collection.flush()
             
-            self.logger.info(f"Inserted {len(documents)} documents into {collection_name}")
+            self.logger.info(f"Inserted {len(entities)} documents into {collection_name}")
             return insert_result.primary_keys
             
         except Exception as e:
@@ -706,36 +691,47 @@ class MilvusRAGHandler:
         """
         self.logger.info(f"[_generate_embeddings_ENTRY] Called for {len(texts)} texts. Service: {self.embedding_service}")
         if self.embedding_service == "ollama":
-            # Use Ollama embedding endpoint
+            # Use Ollama embedding endpoint with batch processing
             try:
-                import requests # Keep import here to ensure it's attempted
-                self.logger.info(f"[_generate_embeddings_OLLAMA_TRY] Attempting Ollama embedding.")
+                import requests
+                self.logger.info(f"[_generate_embeddings_OLLAMA_TRY] Attempting Ollama embedding with batch processing.")
+                
+                # Process texts one by one since Ollama only supports single-prompt embedding
                 embeddings = []
-                for i, text in enumerate(texts):
-                    self.logger.info(f"[_generate_embeddings_OLLAMA_LOOP_START] Processing text {i+1}/{len(texts)} (first 50 chars): {text[:50]}...")
-                    payload = {
-                        "model": self.config.get("ollama_model", self.ollama_model),
-                        "prompt": text
-                    }
-                    ollama_request_timeout = self.config.get("ollama_request_timeout", 60.0)
-                    self.logger.info(f"[_generate_embeddings_OLLAMA_PRE_POST] Ollama request payload: {payload}, timeout: {ollama_request_timeout}s to endpoint: {self.config.get('ollama_endpoint', self.ollama_endpoint)}")
-                    response = requests.post(
-                        f"{self.config.get('ollama_endpoint', self.ollama_endpoint)}/api/embeddings",
-                        json=payload,
-                        timeout=ollama_request_timeout
-                    )
-                    self.logger.info(f"[_generate_embeddings_OLLAMA_POST_POST] Ollama response status: {response.status_code}")
-                    response.raise_for_status()
-                    embedding_data = response.json()["embedding"]
-                    embeddings.append(embedding_data)
-                    self.logger.info(f"[_generate_embeddings_OLLAMA_LOOP_END] Ollama embedding received for text {i+1}/{len(texts)}.")
-                self.logger.info(f"[_generate_embeddings_OLLAMA_SUCCESS] Ollama embeddings generated for {len(texts)} texts.")
+                ollama_request_timeout = self.config.get("ollama_request_timeout", 10.0)
+                
+                for text in texts:
+                    try:
+                        payload = {
+                            "model": self.config.get("ollama_model", self.ollama_model),
+                            "prompt": text  # Send single text per request
+                        }
+                        self.logger.info(f"[_generate_embeddings_OLLAMA_REQUEST] Processing text: {text[:50]}...")
+                        
+                        response = requests.post(
+                            f"{self.config.get('ollama_endpoint', self.ollama_endpoint)}/api/embeddings",
+                            json=payload,
+                            timeout=ollama_request_timeout
+                        )
+                        response.raise_for_status()
+                        
+                        embedding_data = response.json()
+                        if "embedding" in embedding_data:
+                            embeddings.append(embedding_data["embedding"])
+                        else:
+                            self.logger.error(f"[_generate_embeddings_OLLAMA_MISSING] Embedding missing in response for text: {text[:50]}...")
+                            embeddings.append([])  # Append empty list to maintain index alignment
+                    except Exception as e:
+                        self.logger.error(f"[_generate_embeddings_OLLAMA_ERROR] Failed to get embedding for text: {text[:50]}... Error: {e}")
+                        embeddings.append([])  # Append empty list to maintain index alignment
+                
+                self.logger.info(f"[_generate_embeddings_OLLAMA_SUCCESS] Generated {len(embeddings)} embeddings")
                 return embeddings
             except requests.exceptions.Timeout:
-                self.logger.error(f"[_generate_embeddings_OLLAMA_TIMEOUT] Ollama request timed out after {ollama_request_timeout} seconds.", exc_info=True)
-                raise # Re-raise the timeout exception
+                self.logger.error(f"[_generate_embeddings_OLLAMA_TIMEOUT] Ollama batch request timed out after {ollama_request_timeout} seconds.", exc_info=True)
+                raise
             except Exception as e:
-                self.logger.error(f"[_generate_embeddings_OLLAMA_EXCEPTION] Ollama embedding failed: {e}", exc_info=True)
+                self.logger.error(f"[_generate_embeddings_OLLAMA_EXCEPTION] Ollama batch embedding failed: {e}", exc_info=True)
                 raise
         else:
             self.logger.info(f"[_generate_embeddings_SENTENCE_TRANSFORMERS] Using SentenceTransformers.")
@@ -782,16 +778,24 @@ class MilvusRAGHandler:
         chunk_size = self.knowledge_config.get("indexing", {}).get("chunk_size", 1000)
         chunk_overlap = self.knowledge_config.get("indexing", {}).get("chunk_overlap", 200)
         
-        for file_path in knowledge_path.rglob("*.*"):
-            if file_path.suffix.lower() not in [".md", ".cs"]:
-                continue
-                
+        # Use ThreadPoolExecutor for parallel file processing
+        from concurrent.futures import ThreadPoolExecutor
+        import threading
+        
+        # Thread-safe data structures
+        stats_lock = threading.Lock()
+        documents_lock = threading.Lock()
+        all_documents = {"peripheral_docs": [], "renode_examples": []}
+        
+        def process_file(file_path):
+            nonlocal stats
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
                 
-                documents = []
+                file_documents = []
                 collection_name = "peripheral_docs"
+                file_stats = {"code_examples": 0, "docs": 0, "inserted": 0}
                 
                 if file_path.suffix.lower() == ".cs":
                     # Process C# code examples as single documents
@@ -802,12 +806,12 @@ class MilvusRAGHandler:
                         "type": "code_example"
                     }
                     
-                    documents.append({
+                    file_documents.append({
                         "content": content,
                         "metadata": metadata
                     })
                     collection_name = "renode_examples"
-                    stats["code_examples"] += 1
+                    file_stats["code_examples"] = 1
                     
                 else:  # .md files
                     # Extract metadata from file
@@ -827,21 +831,49 @@ class MilvusRAGHandler:
                             "total_chunks": len(chunks)
                         }
                         
-                        documents.append({
+                        file_documents.append({
                             "content": chunk,
                             "metadata": metadata
                         })
-                    stats["docs"] += 1
+                    file_stats["docs"] = 1
                 
-                # Insert documents into appropriate collection
-                self.insert_documents(documents, collection_name=collection_name)
+                # Add to global documents list
+                with documents_lock:
+                    if collection_name == "peripheral_docs":
+                        all_documents["peripheral_docs"].extend(file_documents)
+                    else:
+                        all_documents["renode_examples"].extend(file_documents)
                 
-                stats["processed"] += 1
-                stats["inserted"] += len(documents)
+                # Update statistics
+                file_stats["inserted"] = len(file_documents)
+                return file_stats
                 
             except Exception as e:
                 self.logger.error(f"Error processing {file_path}: {e}")
-                stats["errors"] += 1
+                return {"errors": 1}
+        
+        # Process files in parallel
+        file_paths = [fp for fp in knowledge_path.rglob("*.*")
+                     if fp.suffix.lower() in [".md", ".cs"]]
+        
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            future_to_path = {executor.submit(process_file, fp): fp for fp in file_paths}
+            for future in future_to_path:
+                file_stats = future.result()
+                with stats_lock:
+                    for key in ["code_examples", "docs", "inserted", "errors"]:
+                        if key in file_stats:
+                            stats[key] += file_stats[key]
+                    stats["processed"] += 1 if "errors" not in file_stats else 0
+        
+        # Bulk insert documents after parallel processing
+        for collection_name, docs in all_documents.items():
+            if docs:
+                # Insert in chunks to avoid large batches
+                chunk_size = 100  # Milvus recommended batch size
+                for i in range(0, len(docs), chunk_size):
+                    batch = docs[i:i+chunk_size]
+                    self.insert_documents(batch, collection_name=collection_name)
         
         return stats
     
@@ -876,9 +908,13 @@ class MilvusRAGHandler:
         
         return chunks
     
+    from functools import lru_cache
+
+    @lru_cache(maxsize=100)
     def _extract_peripheral_name(self, file_path: Path) -> str:
         """
         Extract peripheral name from file path or name.
+        Uses LRU caching to avoid repeated processing of same filenames.
         
         Args:
             file_path: Path to the file
@@ -886,7 +922,7 @@ class MilvusRAGHandler:
         Returns:
             Extracted peripheral name
         """
-        # Try to extract from filename
+        # Convert to string for caching since Path objects aren't hashable
         filename = file_path.stem.lower()
         
         # Remove common prefixes/suffixes

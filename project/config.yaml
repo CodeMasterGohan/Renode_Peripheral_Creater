@@ -55,7 +55,6 @@ llm:
     code_generation: 8192
     default: 8192
     documentation: 8192
-  openai_api_key: ${OPENROUTER_API_KEY}
   openrouter_api_key: ${OPENROUTER_API_KEY}
   preferences:
     analysis: openrouter/deepseek/deepseek-r1-0528:free
@@ -184,3 +183,17 @@ validation:
     max_complexity_score: 50
     min_documentation_score: 70
     min_test_coverage: 80
+
+# Added model configuration section
+models:
+  deepseek-r1-0528-free:
+    provider: openrouter
+    model_id: deepseek/deepseek-r1-0528:free
+    max_tokens: 8192
+    temperature_range: [0.1, 1.0]
+    cost_per_1k_tokens: 0.0
+    supports_json: true
+    supports_functions: false
+    supports_system_prompt: true
+    rate_limit: 60
+    timeout: 120

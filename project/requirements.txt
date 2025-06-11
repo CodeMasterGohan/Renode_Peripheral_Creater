@@ -12,4 +12,7 @@ ollama
 sentence-transformers
 google-generativeai
 groq
-numpy
+asyncio
+jsonschema==4.22.0
+python-slugify==8.0.4
+tqdm

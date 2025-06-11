@@ -260,6 +260,21 @@ class RenodeModelGenerator:
         )
         export_parser.set_defaults(func=self.cmd_export_templates)
         
+        # Update-knowledge command
+        update_parser = subparsers.add_parser(
+            'update-knowledge',
+            help='Update the knowledge base with documentation and examples'
+        )
+        update_parser.add_argument(
+            '--knowledge-dir', required=True,
+            help='Path to directory containing documentation files (.md, .cs)'
+        )
+        update_parser.add_argument(
+            '--config', default='config.yaml',
+            help='Path to configuration file (default: config.yaml)'
+        )
+        update_parser.set_defaults(func=self.cmd_update_knowledge)
+        
         # Resume command
         resume_parser = subparsers.add_parser(
             'resume',
@@ -341,14 +356,12 @@ class RenodeModelGenerator:
                 console=self.console
             ) as progress:
                 
-                # Step 1: Check if Milvus is empty and populate if necessary
+                # Step 1: Check if Milvus is empty
                 task = progress.add_task("Checking knowledge base...", total=100)
                 if self.milvus_handler.doc_collection.num_entities == 0:
-                    self.console.print("[yellow]Knowledge base is empty. Performing one-time indexing of documents...[/yellow]")
-                    self.console.print("[yellow]This may take a few minutes depending on the number of documents...[/yellow]")
-                    knowledge_dir = "../docs"
-                    stats = self.milvus_handler.update_knowledge_base(knowledge_dir)
-                    self.console.print(f"[green]✓ Indexing complete. Processed {stats['processed']} files, inserted {stats['inserted']} chunks.[/green]")
+                    progress.update(task, completed=100, description="[red]Error: Knowledge base empty![/red]")
+                    self.console.print("[red]Document collection is empty. Please run the 'update-knowledge' command first to populate the vector database.[/red]")
+                    sys.exit(1)
                 progress.update(task, completed=100)
                 
                 # Step 2: Retrieve documentation
@@ -363,7 +376,7 @@ class RenodeModelGenerator:
                 self.logger.info(f"[MAIN_POST_PSS] perform_similarity_search returned. Found {len(docs)} docs.")
                 progress.update(task, completed=100)
                 
-                # Step 2: Generate model
+                # Step 3: Generate model
                 task = progress.add_task("Generating peripheral model...", total=6)
                 
                 # Run the generation pipeline
@@ -402,6 +415,21 @@ class RenodeModelGenerator:
             
             # Offer recovery options
             self._offer_recovery_options(e)
+
+    def cmd_update_knowledge(self, args):
+        """Update the knowledge base with documentation and examples."""
+        self.console.print(f"\n[bold]Updating knowledge base from:[/bold] {args.knowledge_dir}")
+        try:
+            # Use the Milvus handler to update the knowledge base
+            stats = self.milvus_handler.update_knowledge_base(args.knowledge_dir)
+            self.console.print(f"[green]✓ Knowledge base updated successfully![/green]")
+            self.console.print(f"  Processed files: {stats['processed']}")
+            self.console.print(f"  Inserted chunks: {stats['inserted']}")
+            self.console.print(f"  Errors: {stats['errors']}")
+        except Exception as e:
+            self.logger.error(f"Knowledge base update failed: {e}", exc_info=True)
+            self.console.print(f"[red]✗ Knowledge base update failed: {e}[/red]")
+            sys.exit(1)
             
     def cmd_validate(self, args):
         """Validate a peripheral model."""
